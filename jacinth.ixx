@@ -1,6 +1,7 @@
 module;
 
 #include <cstdint>
+#include <map>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -57,6 +58,16 @@ struct is_optional<std::optional<T>> : std::true_type {};
 
 template <typename T>
 inline constexpr bool is_optional_v = is_optional<T>::value;
+
+// map specializations
+template <typename T>
+struct is_map : std::false_type {};
+
+template <typename Key, typename Value, typename Compare, typename Alloc>
+struct is_map<std::map<Key, Value, Compare, Alloc>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_map_v = is_map<T>::value;
 
 // used for static assert
 template <typename...>
@@ -137,6 +148,25 @@ void parseValue(yyjson_val *val, T &field)
         } else
             field.reset();
     }
+    // maps
+    else if constexpr (is_map_v<FieldType>) {
+        // TODO(crueter): Really need better err handling
+        if (!yyjson_is_obj(val))
+            return;
+        using MappedType = typename FieldType::mapped_type;
+        field.clear();
+
+        yyjson_obj_iter iter;
+        yyjson_obj_iter_init(val, &iter);
+        yyjson_val *key;
+        while ((key = yyjson_obj_iter_next(&iter))) {
+            auto *sub = yyjson_obj_iter_get_val(key);
+            MappedType item;
+            parseValue(sub, item);
+            field.emplace(std::string_view(yyjson_get_str(key), yyjson_get_len(key)),
+                          std::move(item));
+        }
+    }
     // nested structs, etc.
     else if constexpr (std::is_aggregate_v<FieldType>) {
         if (yyjson_is_obj(val))
@@ -204,6 +234,16 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
             writeValue(doc, val, *field);
         else
             yyjson_mut_set_null(val);
+    }
+    // maps
+    else if constexpr (is_map_v<FieldType>) {
+        yyjson_mut_set_obj(val);
+        for (const auto &[k, v] : field) {
+            auto *sub = yyjson_mut_null(doc);
+            auto *key = yyjson_mut_strncpy(doc, k.data(), k.size());
+            yyjson_mut_obj_put(val, key, sub);
+            writeValue(doc, sub, v);
+        }
     }
     // nested structs, etc
     else if constexpr (std::is_aggregate_v<FieldType>) {
@@ -525,8 +565,9 @@ public:
 
     explicit json(doc const &d) : json(yyjson_doc_mut_copy(d, nullptr)) {}
 
-    template<typename T>
-    json(const T &v) : json() {
+    template <typename T>
+    json(const T &v) : json()
+    {
         operator=(v);
     }
 
@@ -578,7 +619,8 @@ public:
 
     // Write directly from an object
     template <typename T>
-    static std::string dump(const T& value, write_opts opts = {}) {
+    static std::string dump(const T &value, write_opts opts = {})
+    {
         json json = value;
         return json.dump(opts);
     }

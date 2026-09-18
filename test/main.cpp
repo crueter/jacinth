@@ -4,7 +4,7 @@
 #include <vector>
 
 #include <sstream>
-#include "yyjson.h"
+#include <map>
 
 import jacinth;
 
@@ -25,6 +25,11 @@ struct Release {
     std::string created_at;
     std::string published_at;
     std::vector<Asset> assets;
+};
+
+struct MapStruct {
+    std::string name;
+    std::map<std::string, uint32_t> values;
 };
 
 int main()
@@ -122,7 +127,22 @@ int main()
     // Direct write from a struct
     {
         std::println("Direct write from newAssets:");
-        std::println("  {}", jacinth::json::dump(newAssets, {.pretty = true}));
+        std::println("{}", jacinth::json::dump(newAssets, {.pretty = true}));
+    }
+
+    // Maps
+    {
+        MapStruct s = {
+            "John",
+            {
+                {"James", 23},
+                {"Kayla", 76},
+                {"Thomas", 51}
+            }
+        };
+
+        std::println("MapStruct:");
+        std::println("{}", jacinth::json::dump(s, {.pretty = true}));
     }
 
     // TODO: test doc, struct write
