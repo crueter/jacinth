@@ -62,6 +62,32 @@ inline constexpr bool is_optional_v = is_optional<T>::value;
 template <typename...>
 inline constexpr bool always_false = false;
 
+// forwarder for yyjson_write_flag
+struct write_opts {
+    bool pretty;
+    bool escapeUnicode;
+    bool escapeSlashes;
+    bool allowInfAndNan;
+    bool writeInfAndNanAsNull;
+    bool allowInvalidUnicode;
+    bool prettyTwoSpaces;
+    bool endingNewline;
+
+    yyjson_write_flag to_flags() const
+    {
+        yyjson_write_flag f = 0;
+        f |= pretty ? YYJSON_WRITE_PRETTY : 0;
+        f |= escapeUnicode ? YYJSON_WRITE_ESCAPE_UNICODE : 0;
+        f |= escapeSlashes ? YYJSON_WRITE_ESCAPE_SLASHES : 0;
+        f |= allowInfAndNan ? YYJSON_WRITE_ALLOW_INF_AND_NAN : 0;
+        f |= writeInfAndNanAsNull ? YYJSON_WRITE_INF_AND_NAN_AS_NULL : 0;
+        f |= allowInvalidUnicode ? YYJSON_WRITE_ALLOW_INVALID_UNICODE : 0;
+        f |= prettyTwoSpaces ? YYJSON_WRITE_PRETTY_TWO_SPACES : 0;
+        f |= endingNewline ? YYJSON_WRITE_NEWLINE_AT_END : 0;
+        return f;
+    }
+};
+
 template <typename T>
 void parseValue(yyjson_val *val, T &field)
 {
@@ -540,12 +566,11 @@ public:
         return json{m};
     }
 
-    // TODO: make these flags a struct or something
-    std::string dump(yyjson_write_flag flag = 0)
+    std::string dump(write_opts opts = {})
     {
         auto *root = yyjson_mut_doc_get_root(m_doc);
         std::size_t len = 0;
-        char *buf = root ? yyjson_mut_val_write(root, flag, &len) : nullptr;
+        char *buf = root ? yyjson_mut_val_write(root, opts.to_flags(), &len) : nullptr;
         std::string s(buf ? buf : "", buf ? len : 0);
         free(buf);
         return s;
@@ -553,9 +578,9 @@ public:
 
     // Write directly from an object
     template <typename T>
-    static std::string dump(const T& value, yyjson_write_flag flag = 0) {
+    static std::string dump(const T& value, write_opts opts = {}) {
         json json = value;
-        return json.dump(flag);
+        return json.dump(opts);
     }
 
     // freeze this into a read-only doc

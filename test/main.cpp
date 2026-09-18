@@ -122,7 +122,7 @@ int main()
     // Direct write from a struct
     {
         std::println("Direct write from newAssets:");
-        std::println("  {}", jacinth::json::dump(newAssets));
+        std::println("  {}", jacinth::json::dump(newAssets, {.pretty = true}));
     }
 
     // TODO: test doc, struct write
