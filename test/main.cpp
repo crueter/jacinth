@@ -73,21 +73,18 @@ int main()
         }
     }
 
-    std::vector<Asset> newAssets = {
-        Asset{
-            .name = "Test-Asset.tar.gz",
-            .size = 6791230,
-            .digest = "sha256:abcdef1234567890",
-            .created_at = "tomorrow",
-            .browser_download_url = "https://example.com",
-        }
-    };
+    std::vector<Asset> newAssets = {Asset{
+        .name = "Test-Asset.tar.gz",
+        .size = 6791230,
+        .digest = "sha256:abcdef1234567890",
+        .created_at = "tomorrow",
+        .browser_download_url = "https://example.com",
+    }};
 
     // Create a JSON from scratch
     {
         auto json = jacinth::json();
-        json["hi"] = "Hello World!",
-        json["creator"] = "Jacinth, by crueter";
+        json["hi"] = "Hello World!", json["creator"] = "Jacinth, by crueter";
         json["files"] = newAssets;
 
         auto dumped = json.dump();

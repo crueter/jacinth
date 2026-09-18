@@ -300,7 +300,8 @@ public:
         return yyjson_mut_arr_remove(m_val, i);
     }
 
-    bool remove(std::size_t pos, std::size_t n) {
+    bool remove(std::size_t pos, std::size_t n)
+    {
         ensure_array();
         return yyjson_mut_arr_remove_range(m_val, pos, n);
     }
@@ -457,7 +458,8 @@ public:
         return root().remove(i);
     }
 
-    bool remove(std::size_t pos, std::size_t n) {
+    bool remove(std::size_t pos, std::size_t n)
+    {
         return root().remove(pos, n);
     }
 

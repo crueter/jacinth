@@ -28,6 +28,7 @@ Nice to haves that are not guaranteed, but may be added in the future:
 This library is super WIP so don't expect much of anything for now.
 
 - Struct reflection reads
-- Struct reflection writes?
-- In-place JSON/doc API (`jacinth::json`, `jacinth::doc`)
+- Struct reflection writes
+- Partially-implemented in-place JSON/doc API (`jacinth::json`, `jacinth::doc`)
+  - This is intended to be relatively drop-in to nlohmann
 - C++20 Module support
