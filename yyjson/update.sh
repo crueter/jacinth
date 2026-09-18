@@ -12,7 +12,7 @@ curl -sSfLO "https://github.com/$repo/archive/$artifact"
 tar xf $artifact
 
 cd $dir
-rm -rf doc fuzz misc test .git* ./*.swift yyjson.pc.in
+rm -rf doc fuzz misc test .git* ./*.swift yyjson.pc.in CMakeLists.txt cmake
 mv ./* ..
 
 cd ..

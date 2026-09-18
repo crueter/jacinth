@@ -12,7 +12,11 @@ curl -sSfLO "https://github.com/$repo/archive/$artifact"
 tar xf $artifact
 
 cd $dir
-rm -rf meta .git* build.jam index.html doc example misc test modules/usage*
+rm -rf meta .git* build.jam index.html doc example misc test modules/usage* CMakeLists.txt
+
+# TODO: Boost does not yet have module support for system targets
+rm -rf modules
+
 mv ./* ..
 cd ..
 rm -rf $artifact $dir
