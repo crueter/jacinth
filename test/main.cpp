@@ -1,11 +1,10 @@
-#include <filesystem>
 #include <fstream>
 #include <print>
 #include <utility>
 #include <vector>
 
-#include "yyjson.h"
 #include <sstream>
+#include "yyjson.h"
 
 import jacinth;
 
@@ -32,33 +31,66 @@ int main()
     std::ifstream file("release.json");
     std::stringstream buf;
     buf << file.rdbuf();
-    auto json = buf.str();
+    auto data = buf.str();
 
-    yyjson_doc *doc = yyjson_read(json.c_str(), json.size(), 0);
-    if (!doc)
-        return 1;
+    // Struct reflection
+    {
+        Release release = jacinth::doc::read(data);
 
-    yyjson_val *root = yyjson_doc_get_root(doc);
-    Release release;
+        std::println("Release {}", release.name);
+        std::println("  Tag: {}", release.tag_name);
+        std::println("  URL: {}", release.html_url);
+        std::println("  Assets:");
 
-    jacinth::parseValue(root, release);
+        std::size_t i = 0;
 
-    yyjson_doc_free(doc);
+        for (const auto &a : std::as_const(release.assets)) {
+            std::println("    Asset {}", i);
+            // std::println("      Name: {}", a.name);
+            // std::println("      Size: {}", a.size);
+            // std::println("      Digest: {}", a.digest);
+            // std::println("      URL: {}", a.browser_download_url);
 
-    std::println("Release {}", release.name);
-    std::println("  Tag: {}", release.tag_name);
-    std::println("  URL: {}", release.html_url);
-    std::println("  Assets:");
+            ++i;
+        }
+    }
 
-    std::size_t i = 0;
+    // Read from a JSON (mutable)
+    {
+        auto json = jacinth::json::read(data);
 
-    for (const auto &a : std::as_const(release.assets)) {
-        std::println("    Asset {}", i);
-        std::println("      Name: {}", a.name);
-        std::println("      Size: {}", a.size);
-        std::println("      Digest: {}", a.digest);
-        std::println("      URL: {}", a.browser_download_url);
+        // TODO: std::formatter specializations
+        std::println("Release {}", std::string(json["name"]));
+        std::println("  Tag: {}", std::string(json["tag_name"]));
+        std::println("  URL: {}", std::string(json["html_url"]));
+        std::println("  Assets:");
 
-        ++i;
+        auto assets = json["assets"];
+        // TODO: foreach-support
+        for (std::size_t i = 0; i < assets.size(); ++i) {
+            auto asset = assets[i];
+            std::println("    Asset {}: {}", i, std::string(asset["name"]));
+        }
+    }
+
+    // Create a JSON from scratch
+    {
+        auto json = jacinth::json();
+        json["hi"] = "Hello World!",
+        json["creator"] = "Jacinth, by crueter";
+        auto dumped = json.dump();
+        std::println("Dumped: {}", dumped);
+    }
+
+    // Mutate existing json
+    {
+        auto json = jacinth::json::read(data);
+        json["name"] = "Custom Name";
+        json["body"] = "Release description :)";
+
+        // TODO: remove, etc. methods
+        json["assets"] = "dead";
+
+        std::println("Mutated dump: {}", json.dump());
     }
 }

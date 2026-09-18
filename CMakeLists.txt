@@ -1,17 +1,24 @@
 cmake_minimum_required(VERSION 3.31)
 
-project(jacinth LANGUAGES CXX)
+project(jacinth LANGUAGES C CXX)
+
+include(CMakeDependentOption)
 
 # options
 option(JACINTH_BUILD_TESTS "Build Jacinth's test application" ON)
-option(JACINTH_USE_SYSTEM_PFR "Use system Boost.PFR instead of bundled"
-    ${PROJECT_IS_TOP_LEVEL})
+option(JACINTH_USE_REFLECTION
+    "Use C++26 reflection features instead of Boost.PFR" OFF)
+cmake_dependent_option(JACINTH_USE_SYSTEM_PFR
+    "Use system Boost.PFR instead of bundled" ${PROJECT_IS_TOP_LEVEL}
+    "NOT JACINTH_USE_REFLECTION" ON) # forcing to "on" enables install target
 option(JACINTH_USE_SYSTEM_YYJSON "Use system yyjson instead of bundled"
     ${PROJECT_IS_TOP_LEVEL})
 
 if (JACINTH_USE_SYSTEM_PFR AND JACINTH_USE_SYSTEM_YYJSON)
     option(JACINTH_INSTALL "Create a Jacinth install target"
         ${PROJECT_IS_TOP_LEVEL})
+else()
+    set(JACINTH_INSTALL OFF)
 endif()
 
 # cxx
@@ -20,13 +27,21 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# pfr
-if(JACINTH_USE_SYSTEM_PFR)
-    find_package(Boost COMPONENTS pfr REQUIRED)
+# reflection
+# TODO: MSVC
+if (JACINTH_USE_REFLECTION)
+    set(CMAKE_CXX_STANDARD 26)
+    add_compile_definitions(JACINTH_USE_REFLECTION)
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-freflection>)
 else()
-    add_library(boost_pfr INTERFACE)
-    target_include_directories(boost_pfr INTERFACE pfr/include)
-    add_library(Boost::pfr ALIAS boost_pfr)
+    # pfr
+    if(JACINTH_USE_SYSTEM_PFR)
+        find_package(Boost COMPONENTS pfr REQUIRED)
+    else()
+        add_library(boost_pfr INTERFACE)
+        target_include_directories(boost_pfr INTERFACE pfr/include)
+        add_library(Boost::pfr ALIAS boost_pfr)
+    endif()
 endif()
 
 # yyjson
@@ -40,9 +55,15 @@ endif()
 
 # jacinth module target
 add_library(jacinth)
+
 target_sources(jacinth PUBLIC
     FILE_SET jacinth TYPE CXX_MODULES FILES jacinth.ixx)
-target_link_libraries(jacinth PUBLIC yyjson Boost::pfr)
+
+target_link_libraries(jacinth PUBLIC yyjson)
+if (NOT JACINTH_USE_REFLECTION)
+    target_link_libraries(jacinth PUBLIC Boost::pfr)
+endif()
+
 add_library(jacinth::jacinth ALIAS jacinth)
 
 if (JACINTH_INSTALL)
