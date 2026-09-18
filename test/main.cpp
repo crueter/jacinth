@@ -67,15 +67,15 @@ int main()
         auto json = jacinth::doc::read(data);
 
         // TODO: std::formatter specializations
-        std::println("Release {}", std::string(json["name"]));
-        std::println("  Tag: {}", std::string(json["tag_name"]));
-        std::println("  URL: {}", std::string(json["html_url"]));
+        std::println("Release {}", json["name"].as<std::string>());
+        std::println("  Tag: {}", json["tag_name"].as<std::string>());
+        std::println("  URL: {}", json["html_url"].as<std::string>());
         std::println("  Assets:");
 
         auto assets = json["assets"];
 
         for (auto a : assets.as_array()) {
-            std::println("    Asset: {}", std::string(a["name"]));
+            std::println("    Asset: {}", a["name"].as<std::string>());
         }
     }
 
@@ -99,7 +99,7 @@ int main()
 
         // TODO: is_type funcs
         for (auto [k, v] : json.as_object()) {
-            std::println("  {}: {}", std::string(k), std::string(v));
+            std::println("  {}: {}", std::string(k), v.as<std::string>());
         }
     }
 

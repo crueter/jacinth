@@ -317,6 +317,14 @@ public:
         return t;
     }
 
+    // explicit conv
+    template <typename T>
+    T as() const
+    {
+        T t = operator T();
+        return t;
+    }
+
     // Try to get a value, or the default if not
     template <typename T>
     T get(std::string_view key, T default_value = {}) const
@@ -363,6 +371,14 @@ public:
     {
         T t;
         parseValue(m_doc->root, t);
+        return t;
+    }
+
+    // explicit conv
+    template <typename T>
+    T as() const
+    {
+        T t = operator T();
         return t;
     }
 
@@ -451,6 +467,14 @@ public:
         // parseValue can't take mutable values...
         auto *idoc = yyjson_mut_val_imut_copy(m_val, nullptr);
         parseValue(idoc->root, t);
+        return t;
+    }
+
+    // explicit conv
+    template <typename T>
+    T as() const
+    {
+        T t = operator T();
         return t;
     }
 
@@ -591,10 +615,18 @@ public:
 
     // interpret the root as type T
     template <typename T>
-    T to() const
+    operator T() const
     {
         T t;
         parseValue(root(), t);
+        return t;
+    }
+
+    // explicit conv
+    template <typename T>
+    T as() const
+    {
+        T t = operator T();
         return t;
     }
 
