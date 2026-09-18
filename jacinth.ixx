@@ -18,6 +18,25 @@ export module jacinth;
 export namespace jacinth
 {
 
+// iterator forwarders
+template <typename Iter>
+struct iterable_view {
+    Iter b, e;
+    Iter begin() const
+    {
+        return b;
+    }
+    Iter end() const
+    {
+        return e;
+    }
+};
+
+class const_array_iterator;
+class const_object_iterator;
+class mut_array_iterator;
+class mut_object_iterator;
+
 // vector specializations
 template <typename T>
 struct is_vector : std::false_type {};
@@ -155,6 +174,8 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
     }
 }
 
+// TODO: is_<type> funcs
+
 // An immutable JSON-ish value
 class value {
     yyjson_doc *m_doc;
@@ -206,13 +227,19 @@ public:
         return yyjson_arr_size(m_val);
     }
 
-    bool is_object() const {
+    bool is_object() const
+    {
         return yyjson_is_obj(m_val);
     }
 
-    bool is_array() const {
+    bool is_array() const
+    {
         return yyjson_is_arr(m_val);
     }
+
+    // iter
+    iterable_view<const_object_iterator> as_object() const;
+    iterable_view<const_array_iterator> as_array() const;
 };
 
 // Read-only JSON tree
@@ -248,13 +275,19 @@ public:
     }
 
     // root obj testers
-    bool is_object() const {
+    bool is_object() const
+    {
         return yyjson_is_obj(m_doc->root);
     }
 
-    bool is_array() const {
+    bool is_array() const
+    {
         return yyjson_is_arr(m_doc->root);
     }
+
+    // iter
+    iterable_view<const_object_iterator> as_object() const;
+    iterable_view<const_array_iterator> as_array() const;
 };
 
 // A mutable JSON-ish value
@@ -379,13 +412,19 @@ public:
         return yyjson_mut_arr_size(m_val);
     }
 
-    bool is_object() const {
+    bool is_object() const
+    {
         return yyjson_mut_is_obj(m_val);
     }
 
-    bool is_array() const {
+    bool is_array() const
+    {
         return yyjson_mut_is_arr(m_val);
     }
+
+    // iter
+    iterable_view<mut_object_iterator> as_object();
+    iterable_view<mut_array_iterator> as_array();
 };
 
 // Read-write JSON tree
@@ -505,15 +544,193 @@ public:
     }
 
     // root obj testers
-    bool is_object() const {
+    bool is_object() const
+    {
         return yyjson_mut_is_obj(m_doc->root);
     }
 
-    bool is_array() const {
+    bool is_array() const
+    {
         return yyjson_mut_is_arr(m_doc->root);
+    }
+
+    // iter
+    iterable_view<mut_object_iterator> as_object();
+    iterable_view<mut_array_iterator> as_array();
+};
+
+// iterators
+// TODO: find less duped solution
+class const_array_iterator {
+    yyjson_doc *m_doc{};
+    yyjson_arr_iter m_iter{};
+    yyjson_val *m_val{};
+    std::size_t m_idx{0};
+
+public:
+    const_array_iterator() = default;
+    const_array_iterator(yyjson_doc *doc, yyjson_val *arr) : m_doc(doc)
+    {
+        if (arr && yyjson_is_arr(arr)) {
+            yyjson_arr_iter_init(arr, &m_iter);
+            m_val = yyjson_arr_iter_next(&m_iter);
+        }
+    }
+
+    bool operator!=(const const_array_iterator &other) const
+    {
+        return m_val != other.m_val;
+    }
+    const_array_iterator &operator++()
+    {
+        m_val = yyjson_arr_iter_next(&m_iter);
+        ++m_idx;
+        return *this;
+    }
+
+    value operator*() const
+    {
+        return {m_doc, m_val};
     }
 };
 
-// TODO: OOP yyjson API, similar to nlohmann, etc
+class const_object_iterator {
+    yyjson_doc *m_doc{};
+    yyjson_obj_iter m_iter{};
+    yyjson_val *m_key{};
+
+public:
+    const_object_iterator() = default;
+    const_object_iterator(yyjson_doc *doc, yyjson_val *obj) : m_doc(doc)
+    {
+        if (obj && yyjson_is_obj(obj)) {
+            yyjson_obj_iter_init(obj, &m_iter);
+            m_key = yyjson_obj_iter_next(&m_iter);
+        }
+    }
+
+    bool operator!=(const const_object_iterator &other) const
+    {
+        return m_key != other.m_key;
+    }
+
+    const_object_iterator &operator++()
+    {
+        m_key = yyjson_obj_iter_next(&m_iter);
+        return *this;
+    }
+
+    std::pair<std::string_view, value> operator*() const
+    {
+        return {std::string_view(yyjson_get_str(m_key), yyjson_get_len(m_key)),
+                value(m_doc, yyjson_obj_iter_get_val(m_key))};
+    }
+};
+
+class mut_array_iterator {
+    yyjson_mut_doc *m_doc{};
+    yyjson_mut_arr_iter m_iter{};
+    yyjson_mut_val *m_val{};
+    std::size_t m_idx{0};
+
+public:
+    mut_array_iterator() = default;
+    mut_array_iterator(yyjson_mut_doc *doc, yyjson_mut_val *arr) : m_doc(doc)
+    {
+        if (arr && yyjson_mut_is_arr(arr)) {
+            yyjson_mut_arr_iter_init(arr, &m_iter);
+            m_val = yyjson_mut_arr_iter_next(&m_iter);
+        }
+    }
+
+    bool operator!=(const mut_array_iterator &other) const
+    {
+        return m_val != other.m_val;
+    }
+
+    mut_array_iterator &operator++()
+    {
+        m_val = yyjson_mut_arr_iter_next(&m_iter);
+        ++m_idx;
+        return *this;
+    }
+
+    mutable_value operator*() const
+    {
+        return {m_doc, m_val};
+    }
+};
+
+class mut_object_iterator {
+    yyjson_mut_doc *m_doc{};
+    yyjson_mut_obj_iter m_iter{};
+    yyjson_mut_val *m_key{};
+
+public:
+    mut_object_iterator() = default;
+    mut_object_iterator(yyjson_mut_doc *doc, yyjson_mut_val *obj) : m_doc(doc)
+    {
+        if (obj && yyjson_mut_is_obj(obj)) {
+            yyjson_mut_obj_iter_init(obj, &m_iter);
+            m_key = yyjson_mut_obj_iter_next(&m_iter);
+        }
+    }
+
+    bool operator!=(const mut_object_iterator &other) const
+    {
+        return m_key != other.m_key;
+    }
+
+    mut_object_iterator &operator++()
+    {
+        m_key = yyjson_mut_obj_iter_next(&m_iter);
+        return *this;
+    }
+
+    std::pair<std::string_view, mutable_value> operator*() const
+    {
+        return {std::string_view(yyjson_mut_get_str(m_key), yyjson_mut_get_len(m_key)),
+                mutable_value(m_doc, yyjson_mut_obj_iter_get_val(m_key))};
+    }
+};
+
+// iter defs
+inline iterable_view<const_object_iterator> value::as_object() const
+{
+    return {const_object_iterator(m_doc, m_val), const_object_iterator()};
+}
+
+inline iterable_view<const_array_iterator> value::as_array() const
+{
+    return {const_array_iterator(m_doc, m_val), const_array_iterator()};
+}
+
+inline iterable_view<const_object_iterator> doc::as_object() const
+{
+    return root().as_object();
+}
+inline iterable_view<const_array_iterator> doc::as_array() const
+{
+    return root().as_array();
+}
+
+inline iterable_view<mut_object_iterator> mutable_value::as_object()
+{
+    return {mut_object_iterator(m_doc, m_val), mut_object_iterator()};
+}
+
+inline iterable_view<mut_array_iterator> mutable_value::as_array()
+{
+    return {mut_array_iterator(m_doc, m_val), mut_array_iterator()};
+}
+
+inline iterable_view<mut_object_iterator> json::as_object()
+{
+    return root().as_object();
+}
+inline iterable_view<mut_array_iterator> json::as_array()
+{
+    return root().as_array();
+}
 
 } // namespace jacinth

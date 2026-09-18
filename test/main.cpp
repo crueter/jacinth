@@ -55,7 +55,8 @@ int main()
         }
     }
 
-    // Read from a JSON (mutable)
+    // Read from a JSON
+    // TODO: fix doc
     {
         auto json = jacinth::json::read(data);
 
@@ -66,10 +67,9 @@ int main()
         std::println("  Assets:");
 
         auto assets = json["assets"];
-        // TODO: foreach-support
-        for (std::size_t i = 0; i < assets.size(); ++i) {
-            auto asset = assets[i];
-            std::println("    Asset {}: {}", i, std::string(asset["name"]));
+
+        for (auto a : assets.as_array()) {
+            std::println("    Asset: {}", std::string(a["name"]));
         }
     }
 
@@ -89,6 +89,11 @@ int main()
 
         auto dumped = json.dump();
         std::println("Dumped: {}", dumped);
+
+        // TODO: is_type funcs
+        for (auto [k, v] : json.as_object()) {
+            std::println("  {}: {}", std::string(k), std::string(v));
+        }
     }
 
     // Mutate existing json
