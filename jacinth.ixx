@@ -210,7 +210,10 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
         auto *str = yyjson_mut_strcpy(doc, field);
         yyjson_mut_set_strn(val, yyjson_mut_get_str(str), yyjson_mut_get_len(str));
     } else if constexpr (std::is_floating_point_v<FieldType>) {
-        yyjson_mut_set_double(val, double(field));
+        if constexpr (std::is_same_v<FieldType, float>)
+            yyjson_mut_set_float(val, float(field));
+        else
+            yyjson_mut_set_double(val, double(field));
     } else if constexpr (std::is_same_v<FieldType, bool>) {
         yyjson_mut_set_bool(val, field);
     } else if constexpr (std::is_integral_v<FieldType>) {
@@ -255,15 +258,13 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
         {
             constexpr auto name = std::meta::identifier_of(f);
             auto *sub = yyjson_mut_null(doc);
-            auto *key = yyjson_mut_strncpy(doc, name.data(), name.size());
-            yyjson_mut_obj_put(val, key, sub);
+            yyjson_mut_obj_add_val(doc, val, name.data(), sub);
             writeValue(doc, sub, field.[:f:]);
         }
 #else
         boost::pfr::for_each_field_with_name(field, [&](std::string_view name, auto &sub_field) {
             auto *sub = yyjson_mut_null(doc);
-            auto *key = yyjson_mut_strncpy(doc, name.data(), name.size());
-            yyjson_mut_obj_put(val, key, sub);
+            yyjson_mut_obj_add_val(doc, val, name.data(), sub);
             writeValue(doc, sub, sub_field);
         });
 #endif
