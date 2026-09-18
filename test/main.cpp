@@ -27,6 +27,11 @@ struct Release {
     std::vector<Asset> assets;
 };
 
+struct ArrayStruct{
+    std::string label;
+    std::array<float, 4> values;
+};
+
 struct MapStruct {
     std::string name;
     std::map<std::string, uint32_t> values;
@@ -174,6 +179,18 @@ int main()
         std::println("to_json: {}", jacinth::json::dump(s));
         CustomStruct newCustom = jacinth::json::read(json_str);
         std::println("from_json: {}", newCustom.name);
+    }
+
+    // test std::array
+    {
+        ArrayStruct s = {
+            "ArrayStruct",
+            {
+                10.5, 6.7, 988.43, -10000000000
+            }
+        };
+
+        std::println("std::array struct: {}", jacinth::json::dump(s));
     }
 
     // TODO: test doc, struct write

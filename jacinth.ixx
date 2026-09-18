@@ -718,11 +718,15 @@ inline iterable_view<mut_array_iterator> json::as_array()
 } // namespace jacinth
 
 // vector specializations
+// TODO: generalize this onto all vector/array-likes
 template <typename T>
 struct is_vector : std::false_type {};
 
 template <typename T, typename Alloc>
 struct is_vector<std::vector<T, Alloc>> : std::true_type {};
+
+template <typename T, std::size_t N>
+struct is_vector<std::array<T, N>> : std::true_type {};
 
 template <typename T>
 inline constexpr bool is_vector_v = is_vector<T>::value;
