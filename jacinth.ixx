@@ -95,6 +95,7 @@ void parseValue(yyjson_val *val, T &field)
     }
 }
 
+// TODO: handle variant, optional?
 template <typename T>
 void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
 {
@@ -204,6 +205,14 @@ public:
     {
         return yyjson_arr_size(m_val);
     }
+
+    bool is_object() const {
+        return yyjson_is_obj(m_val);
+    }
+
+    bool is_array() const {
+        return yyjson_is_arr(m_val);
+    }
 };
 
 // Read-only JSON tree
@@ -236,6 +245,15 @@ public:
     ~doc()
     {
         yyjson_doc_free(m_doc);
+    }
+
+    // root obj testers
+    bool is_object() const {
+        return yyjson_is_obj(m_doc->root);
+    }
+
+    bool is_array() const {
+        return yyjson_is_arr(m_doc->root);
     }
 };
 
@@ -360,6 +378,14 @@ public:
     {
         return yyjson_mut_arr_size(m_val);
     }
+
+    bool is_object() const {
+        return yyjson_mut_is_obj(m_val);
+    }
+
+    bool is_array() const {
+        return yyjson_mut_is_arr(m_val);
+    }
 };
 
 // Read-write JSON tree
@@ -476,6 +502,15 @@ public:
     mutable_value pop_front()
     {
         return root().pop_front();
+    }
+
+    // root obj testers
+    bool is_object() const {
+        return yyjson_mut_is_obj(m_doc->root);
+    }
+
+    bool is_array() const {
+        return yyjson_mut_is_arr(m_doc->root);
     }
 };
 
