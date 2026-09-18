@@ -288,11 +288,6 @@ public:
         return !m_val || yyjson_is_null(m_val);
     }
 
-    operator bool() const
-    {
-        return !is_null();
-    }
-
     // access ops
     value operator[](std::string_view key) const
     {

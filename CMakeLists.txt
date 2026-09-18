@@ -37,7 +37,9 @@ else()
     # pfr
     if(JACINTH_USE_SYSTEM_PFR)
         find_package(Boost COMPONENTS pfr REQUIRED)
-    else()
+    endif()
+
+    if (NOT TARGET Boost::pfr)
         add_library(boost_pfr INTERFACE)
         target_include_directories(boost_pfr INTERFACE pfr/include)
         add_library(Boost::pfr ALIAS boost_pfr)
@@ -47,7 +49,9 @@ endif()
 # yyjson
 if(JACINTH_USE_SYSTEM_YYJSON)
     find_package(yyjson REQUIRED)
-else()
+endif()
+
+if(NOT TARGET yyjson)
     add_library(yyjson OBJECT
         yyjson/src/yyjson.h yyjson/src/yyjson.c)
     target_include_directories(yyjson PUBLIC yyjson/src)

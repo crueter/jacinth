@@ -22,6 +22,7 @@ Nice to haves that are not guaranteed, but may be added in the future:
 - JS-like append/remove API, and other operator overload sauce
 - C++20 `std::format` specializations for JSON objects
 - Deep, robust error handling
+- Custom to/from_json methods like nlohmann
 
 ## Currently Implemented
 
