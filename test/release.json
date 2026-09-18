@@ -1,1 +1,238 @@
-{"tag_name":"v1789678126.0ce29be608","name":"Eden Nightly - Sep 17 2026","html_url":"https://git.eden-emu.dev/eden-ci/nightly/releases/tag/v1789678126.0ce29be608","body":"## Changelog\n\n- [common] Fix RDTSC nanosecond conversion (#4422) [`0ce29be608`](https://git.eden-emu.dev/eden-emu/eden/commit/0ce29be60874b24890ab9239cecf1bd67b924428)\n  - PR #[4422](https://git.eden-emu.dev/eden-emu/eden/pulls/4422) merged on 2026-09-17 by Feng Chen\n- [msvc] fix build errors (#4451) [`1203082a8f`](https://git.eden-emu.dev/eden-emu/eden/commit/1203082a8f1211ad6ce4d95f0c6947f7ecd27a55)\n  - PR #[4451](https://git.eden-emu.dev/eden-emu/eden/pulls/4451) merged on 2026-09-17 by lizzie\n- [ips] fix .pchtxt with >256 bytes on a single line (#4445) [`14235dc0d0`](https://git.eden-emu.dev/eden-emu/eden/commit/14235dc0d0543c7397dd19eb1a677e76114c08f3)\n  - PR #[4445](https://git.eden-emu.dev/eden-emu/eden/pulls/4445) merged on 2026-09-17 by lizzie\n- Partial revert: [dynarmic] fix sign extension and optimize vaddr lookups for 64bit on x64 systems (#4446) (#4448) [`6374f7f51f`](https://git.eden-emu.dev/eden-emu/eden/commit/6374f7f51f0254358fc26a0b3a182f06a9d84ec9)\n  - PR #[4448](https://git.eden-emu.dev/eden-emu/eden/pulls/4448) merged on 2026-09-17 by lizzie\n- [common/page_table] unmark non-constexpr functions (#4433) [`73e004de6e`](https://git.eden-emu.dev/eden-emu/eden/commit/73e004de6eb530567b3022531c11b92f55f265a6)\n  - PR #[4433](https://git.eden-emu.dev/eden-emu/eden/pulls/4433) merged on 2026-09-17 by lizzie\n- [hle] stpl:sys, stpl:u initial implementation (#4435) [`f7b8ade40e`](https://git.eden-emu.dev/eden-emu/eden/commit/f7b8ade40ec28b35309de0f86391ee7507affa36)\n  - PR #[4435](https://git.eden-emu.dev/eden-emu/eden/pulls/4435) merged on 2026-09-17 by lizzie\n- [hle/ssl] Implement Peek(),{Get,Set}RenegotiationMode,Pending,Poll and stub miscellany (#4428) [`8c1194474e`](https://git.eden-emu.dev/eden-emu/eden/commit/8c1194474e76be02eaf69eefb9fcfdd04bd31229)\n  - PR #[4428](https://git.eden-emu.dev/eden-emu/eden/pulls/4428) merged on 2026-09-17 by lizzie\n- [k_scheduler] fix for libc++ that lazily initializes mutexes (#4447) [`90aafeedc1`](https://git.eden-emu.dev/eden-emu/eden/commit/90aafeedc1d980849894f5bf251313db95594e8a)\n  - PR #[4447](https://git.eden-emu.dev/eden-emu/eden/pulls/4447) merged on 2026-09-17 by lizzie\n- [dynarmic] fix sign extension and optimize vaddr lookups for 64bit on x64 systems (#4446) [`4fe5f62c38`](https://git.eden-emu.dev/eden-emu/eden/commit/4fe5f62c38e71b045d425dc5f4cc4ab83feeafbe)\n  - PR #[4446](https://git.eden-emu.dev/eden-emu/eden/pulls/4446) merged on 2026-09-16 by Exverge","created_at":"2026-09-17T21:44:31+00:00","published_at":"2026-09-17T21:44:31+00:00","assets":[{"name":"Eden-Windows-0ce29be608-arm64-clang-standard.zip","size":32347242,"digest":"sha256:c881aa4c18a3273e991fad131da5a3d4378ba6fe7bc2b0782f6c160143ce1f63","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Windows-0ce29be608-arm64-clang-standard.zip"},{"name":"Eden-Linux-amd64-gcc-standard.AppImage.zsync","size":247218,"digest":"sha256:c405659a163190fe34fd23d9a1c04e4f57a107ff45c58a132560aeca80b39055","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-amd64-gcc-standard.AppImage.zsync"},{"name":"Eden-Linux-0ce29be608-legacy-gcc-standard.AppImage","size":71898582,"digest":"sha256:589ffde664173114a0c438815d5a7f53b58fe97b5249b9ba7be0b64060203305","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-legacy-gcc-standard.AppImage"},{"name":"Eden-Linux-steamdeck-clang-pgo.AppImage.zsync","size":243601,"digest":"sha256:bf3594b0d24408bf372a22399abc0e39159849620bd29f1cef7f35ff0893b544","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-steamdeck-clang-pgo.AppImage.zsync"},{"name":"Eden-macOS-0ce29be608.dmg","size":26406961,"digest":"sha256:3bf495dce58f20ca22774f3d5a0b000fb4b8401258f4f7bdc5ba76382dffc6e4","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-macOS-0ce29be608.dmg"},{"name":"Eden-Android-0ce29be608-standard.apk","size":28042789,"digest":"sha256:e9d5319cb464ba936657ec5c528c0c604968b1846746d1ab63184b60e906a7d7","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Android-0ce29be608-standard.apk"},{"name":"Eden-Linux-aarch64-clang-pgo.AppImage.zsync","size":228967,"digest":"sha256:55af0a46222aeacdc16bcfb028bc0b83928b9ffd56b6a1fe05066013c8162070","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-aarch64-clang-pgo.AppImage.zsync"},{"name":"Eden-Linux-steamdeck-gcc-standard.AppImage.zsync","size":247492,"digest":"sha256:85c806a07a714b6f155981618075e421d95b1ee7c5cf4869c11b324aa64fb1df","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-steamdeck-gcc-standard.AppImage.zsync"},{"name":"Eden-Linux-legacy-gcc-standard.AppImage.zsync","size":245981,"digest":"sha256:67d74003f1a09a28c976c9025bcc85facb847fe0a7112092e3a20e8ea19731a0","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-legacy-gcc-standard.AppImage.zsync"},{"name":"Eden-Linux-rog-ally-clang-pgo.AppImage.zsync","size":239175,"digest":"sha256:33777a91978dd33ca3a4177bfa715395206b1e1bd0abd2f64ec23acba6ebd0b7","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-rog-ally-clang-pgo.AppImage.zsync"},{"name":"Eden-Linux-0ce29be608-amd64-gcc-standard.AppImage","size":72260974,"digest":"sha256:df15cbdd0153c8111448b792f914950be7c9869ff44bea1bd9f0e6d5db98cbc8","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-amd64-gcc-standard.AppImage"},{"name":"Eden-Linux-legacy-clang-pgo.AppImage.zsync","size":242384,"digest":"sha256:136fe90cfc86322afe0db99da5bf11e1c0c2b7928e811020e49eadc9e381a435","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-legacy-clang-pgo.AppImage.zsync"},{"name":"Eden-Linux-0ce29be608-aarch64-clang-pgo.AppImage","size":66922444,"digest":"sha256:2bb830dfad460a3c69cdd11fff7675c842938eabf8c3ead40475a9972c8e180c","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-aarch64-clang-pgo.AppImage"},{"name":"Eden-Linux-0ce29be608-amd64-clang-pgo.AppImage","size":70934367,"digest":"sha256:68218b26a25e91e4eafd127b07b25892d48b8a385d72e23dc828e232d9125374","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-amd64-clang-pgo.AppImage"},{"name":"Eden-Android-0ce29be608-legacy.apk","size":28428489,"digest":"sha256:f8d588637087ff546e3bfa52d60436274cc5d1ac23d600ee6d0e2b941dd9dead","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Android-0ce29be608-legacy.apk"},{"name":"Eden-Windows-0ce29be608-amd64-clang-pgo.zip","size":40037259,"digest":"sha256:502e76a974f09719a1f205d6d0a6007225cd7e3c8c8514b6572375c99a6f8282","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Windows-0ce29be608-amd64-clang-pgo.zip"},{"name":"Eden-Windows-0ce29be608-amd64-gcc-standard.zip","size":44505042,"digest":"sha256:d933887af5d566b0b0602d574406eabe91b014f3b50842dbe0c0f298d390cc9a","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Windows-0ce29be608-amd64-gcc-standard.zip"},{"name":"Eden-Linux-0ce29be608-legacy-clang-pgo.AppImage","size":70847280,"digest":"sha256:84dbd0532893d875423ee03a630a627e2f8edc8e68727ef849ad5636aaa1d97e","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-legacy-clang-pgo.AppImage"},{"name":"Eden-Linux-aarch64-gcc-standard.AppImage.zsync","size":231535,"digest":"sha256:9a1761550776d97636ee151c5e4c592f4c5df480e09686dcc64254a78c6283cb","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-aarch64-gcc-standard.AppImage.zsync"},{"name":"Eden-Linux-0ce29be608-rog-ally-gcc-standard.AppImage","size":70558096,"digest":"sha256:6510557f11f5a67e9597e53908bfc28762d26d4cbea6657649f8722e8490ddd3","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-rog-ally-gcc-standard.AppImage"},{"name":"Eden-Linux-amd64-clang-pgo.AppImage.zsync","size":242676,"digest":"sha256:b6cb72b90d64f9551136f0fab002de3d1b1526ced31716923382f1b6ef47011e","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-amd64-clang-pgo.AppImage.zsync"},{"name":"Eden-Linux-0ce29be608-steamdeck-clang-pgo.AppImage","size":71201771,"digest":"sha256:53a0b55321b552a73675aa4f2eab40ade637ce58d18579cb396bf49fc3f2a8e1","created_at":"2026-09-17T21:44:30+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-steamdeck-clang-pgo.AppImage"},{"name":"Eden-Windows-0ce29be608-rog-ally-gcc-standard.zip","size":44201846,"digest":"sha256:aba95b3e587a2312a34202b093f2f3cd26987f296c2f9afa6dce7b129e163460","created_at":"2026-09-17T21:44:31+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Windows-0ce29be608-rog-ally-gcc-standard.zip"},{"name":"Eden-0ce29be608.torrent","size":23309,"digest":"sha256:820176f5bbfa82187a4ea28977d75f5c25a0551f8cb191985080b1a254b93493","created_at":"2026-09-17T21:44:31+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-0ce29be608.torrent"},{"name":"Eden-Windows-0ce29be608-arm64-clang-pgo.zip","size":32769313,"digest":"sha256:f08995d74234a5307ce5b250b8c3dcee79412f9a98bdb6b38e01dc11aef56442","created_at":"2026-09-17T21:44:31+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Windows-0ce29be608-arm64-clang-pgo.zip"},{"name":"Eden-Windows-0ce29be608-amd64-msvc-standard.zip","size":33456547,"digest":"sha256:147791f728600b91a4199c9202d4823fea8955bbdb9d4015ec09cf8bf7e928d2","created_at":"2026-09-17T21:44:31+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Windows-0ce29be608-amd64-msvc-standard.zip"},{"name":"Eden-Windows-0ce29be608-rog-ally-clang-pgo.zip","size":40353873,"digest":"sha256:8069242792267b987b811f3858aef2b9d3a4423be86a767e5ab0caab6ac1d7cb","created_at":"2026-09-17T21:44:31+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Windows-0ce29be608-rog-ally-clang-pgo.zip"},{"name":"Eden-Linux-0ce29be608-rog-ally-clang-pgo.AppImage","size":69908039,"digest":"sha256:b89b3082d56bd22b7945395d80edb3710efa268bb9344e69dbab4af2ea66084f","created_at":"2026-09-17T21:44:31+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-rog-ally-clang-pgo.AppImage"},{"name":"Eden-Android-0ce29be608-optimized.apk","size":28030713,"digest":"sha256:bcf5f5f7a67da7655d11f74a4b8ad9e15f51e61fef6114680a5940c98304bb1b","created_at":"2026-09-17T21:44:31+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Android-0ce29be608-optimized.apk"},{"name":"Eden-Linux-rog-ally-gcc-standard.AppImage.zsync","size":241407,"digest":"sha256:ece39a107f0ece51d0eb974f08ae72a0f00c7ae165ae18a7538dd304161c37ea","created_at":"2026-09-17T21:44:31+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-rog-ally-gcc-standard.AppImage.zsync"},{"name":"Eden-Linux-0ce29be608-aarch64-gcc-standard.AppImage","size":67670318,"digest":"sha256:2faef6cda5533d855ea7d27c52876f150ff5fcc1f9645ba00625c1dcc5dd27e1","created_at":"2026-09-17T21:44:31+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-aarch64-gcc-standard.AppImage"},{"name":"Eden-Linux-0ce29be608-steamdeck-gcc-standard.AppImage","size":72339399,"digest":"sha256:a11212b1ed682bebaca5519a563dae2a709efcbf7993773b3d1c91e2e3bd414e","created_at":"2026-09-17T21:44:31+00:00","browser_download_url":"https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-steamdeck-gcc-standard.AppImage"}]}
+{
+    "tag_name": "v1789678126.0ce29be608",
+    "name": "Eden Nightly - Sep 17 2026",
+    "html_url": "https://git.eden-emu.dev/eden-ci/nightly/releases/tag/v1789678126.0ce29be608",
+    "body": "## Changelog\n\n- [common] Fix RDTSC nanosecond conversion (#4422) [`0ce29be608`](https://git.eden-emu.dev/eden-emu/eden/commit/0ce29be60874b24890ab9239cecf1bd67b924428)\n  - PR #[4422](https://git.eden-emu.dev/eden-emu/eden/pulls/4422) merged on 2026-09-17 by Feng Chen\n- [msvc] fix build errors (#4451) [`1203082a8f`](https://git.eden-emu.dev/eden-emu/eden/commit/1203082a8f1211ad6ce4d95f0c6947f7ecd27a55)\n  - PR #[4451](https://git.eden-emu.dev/eden-emu/eden/pulls/4451) merged on 2026-09-17 by lizzie\n- [ips] fix .pchtxt with >256 bytes on a single line (#4445) [`14235dc0d0`](https://git.eden-emu.dev/eden-emu/eden/commit/14235dc0d0543c7397dd19eb1a677e76114c08f3)\n  - PR #[4445](https://git.eden-emu.dev/eden-emu/eden/pulls/4445) merged on 2026-09-17 by lizzie\n- Partial revert: [dynarmic] fix sign extension and optimize vaddr lookups for 64bit on x64 systems (#4446) (#4448) [`6374f7f51f`](https://git.eden-emu.dev/eden-emu/eden/commit/6374f7f51f0254358fc26a0b3a182f06a9d84ec9)\n  - PR #[4448](https://git.eden-emu.dev/eden-emu/eden/pulls/4448) merged on 2026-09-17 by lizzie\n- [common/page_table] unmark non-constexpr functions (#4433) [`73e004de6e`](https://git.eden-emu.dev/eden-emu/eden/commit/73e004de6eb530567b3022531c11b92f55f265a6)\n  - PR #[4433](https://git.eden-emu.dev/eden-emu/eden/pulls/4433) merged on 2026-09-17 by lizzie\n- [hle] stpl:sys, stpl:u initial implementation (#4435) [`f7b8ade40e`](https://git.eden-emu.dev/eden-emu/eden/commit/f7b8ade40ec28b35309de0f86391ee7507affa36)\n  - PR #[4435](https://git.eden-emu.dev/eden-emu/eden/pulls/4435) merged on 2026-09-17 by lizzie\n- [hle/ssl] Implement Peek(),{Get,Set}RenegotiationMode,Pending,Poll and stub miscellany (#4428) [`8c1194474e`](https://git.eden-emu.dev/eden-emu/eden/commit/8c1194474e76be02eaf69eefb9fcfdd04bd31229)\n  - PR #[4428](https://git.eden-emu.dev/eden-emu/eden/pulls/4428) merged on 2026-09-17 by lizzie\n- [k_scheduler] fix for libc++ that lazily initializes mutexes (#4447) [`90aafeedc1`](https://git.eden-emu.dev/eden-emu/eden/commit/90aafeedc1d980849894f5bf251313db95594e8a)\n  - PR #[4447](https://git.eden-emu.dev/eden-emu/eden/pulls/4447) merged on 2026-09-17 by lizzie\n- [dynarmic] fix sign extension and optimize vaddr lookups for 64bit on x64 systems (#4446) [`4fe5f62c38`](https://git.eden-emu.dev/eden-emu/eden/commit/4fe5f62c38e71b045d425dc5f4cc4ab83feeafbe)\n  - PR #[4446](https://git.eden-emu.dev/eden-emu/eden/pulls/4446) merged on 2026-09-16 by Exverge",
+    "created_at": "2026-09-17T21:44:31+00:00",
+    "published_at": "2026-09-17T21:44:31+00:00",
+    "assets": [
+        {
+            "name": "Eden-Windows-0ce29be608-arm64-clang-standard.zip",
+            "size": 32347242,
+            "digest": "sha256:c881aa4c18a3273e991fad131da5a3d4378ba6fe7bc2b0782f6c160143ce1f63",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Windows-0ce29be608-arm64-clang-standard.zip"
+        },
+        {
+            "name": "Eden-Linux-amd64-gcc-standard.AppImage.zsync",
+            "size": 247218,
+            "digest": "sha256:c405659a163190fe34fd23d9a1c04e4f57a107ff45c58a132560aeca80b39055",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-amd64-gcc-standard.AppImage.zsync",
+            "node_id": "node1234"
+        },
+        {
+            "name": "Eden-Linux-0ce29be608-legacy-gcc-standard.AppImage",
+            "size": 71898582,
+            "digest": "sha256:589ffde664173114a0c438815d5a7f53b58fe97b5249b9ba7be0b64060203305",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-legacy-gcc-standard.AppImage"
+        },
+        {
+            "name": "Eden-Linux-steamdeck-clang-pgo.AppImage.zsync",
+            "size": 243601,
+            "digest": "sha256:bf3594b0d24408bf372a22399abc0e39159849620bd29f1cef7f35ff0893b544",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-steamdeck-clang-pgo.AppImage.zsync"
+        },
+        {
+            "name": "Eden-macOS-0ce29be608.dmg",
+            "size": 26406961,
+            "digest": "sha256:3bf495dce58f20ca22774f3d5a0b000fb4b8401258f4f7bdc5ba76382dffc6e4",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-macOS-0ce29be608.dmg",
+            "node_id": "node1234"
+        },
+        {
+            "name": "Eden-Android-0ce29be608-standard.apk",
+            "size": 28042789,
+            "digest": "sha256:e9d5319cb464ba936657ec5c528c0c604968b1846746d1ab63184b60e906a7d7",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Android-0ce29be608-standard.apk"
+        },
+        {
+            "name": "Eden-Linux-aarch64-clang-pgo.AppImage.zsync",
+            "size": 228967,
+            "digest": "sha256:55af0a46222aeacdc16bcfb028bc0b83928b9ffd56b6a1fe05066013c8162070",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-aarch64-clang-pgo.AppImage.zsync",
+            "node_id": "node1234"
+        },
+        {
+            "name": "Eden-Linux-steamdeck-gcc-standard.AppImage.zsync",
+            "size": 247492,
+            "digest": "sha256:85c806a07a714b6f155981618075e421d95b1ee7c5cf4869c11b324aa64fb1df",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-steamdeck-gcc-standard.AppImage.zsync"
+        },
+        {
+            "name": "Eden-Linux-legacy-gcc-standard.AppImage.zsync",
+            "size": 245981,
+            "digest": "sha256:67d74003f1a09a28c976c9025bcc85facb847fe0a7112092e3a20e8ea19731a0",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-legacy-gcc-standard.AppImage.zsync",
+            "node_id": "node1234"
+        },
+        {
+            "name": "Eden-Linux-rog-ally-clang-pgo.AppImage.zsync",
+            "size": 239175,
+            "digest": "sha256:33777a91978dd33ca3a4177bfa715395206b1e1bd0abd2f64ec23acba6ebd0b7",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-rog-ally-clang-pgo.AppImage.zsync"
+        },
+        {
+            "name": "Eden-Linux-0ce29be608-amd64-gcc-standard.AppImage",
+            "size": 72260974,
+            "digest": "sha256:df15cbdd0153c8111448b792f914950be7c9869ff44bea1bd9f0e6d5db98cbc8",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-amd64-gcc-standard.AppImage"
+        },
+        {
+            "name": "Eden-Linux-legacy-clang-pgo.AppImage.zsync",
+            "size": 242384,
+            "digest": "sha256:136fe90cfc86322afe0db99da5bf11e1c0c2b7928e811020e49eadc9e381a435",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-legacy-clang-pgo.AppImage.zsync"
+        },
+        {
+            "name": "Eden-Linux-0ce29be608-aarch64-clang-pgo.AppImage",
+            "size": 66922444,
+            "digest": "sha256:2bb830dfad460a3c69cdd11fff7675c842938eabf8c3ead40475a9972c8e180c",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-aarch64-clang-pgo.AppImage"
+        },
+        {
+            "name": "Eden-Linux-0ce29be608-amd64-clang-pgo.AppImage",
+            "size": 70934367,
+            "digest": "sha256:68218b26a25e91e4eafd127b07b25892d48b8a385d72e23dc828e232d9125374",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-amd64-clang-pgo.AppImage"
+        },
+        {
+            "name": "Eden-Android-0ce29be608-legacy.apk",
+            "size": 28428489,
+            "digest": "sha256:f8d588637087ff546e3bfa52d60436274cc5d1ac23d600ee6d0e2b941dd9dead",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Android-0ce29be608-legacy.apk"
+        },
+        {
+            "name": "Eden-Windows-0ce29be608-amd64-clang-pgo.zip",
+            "size": 40037259,
+            "digest": "sha256:502e76a974f09719a1f205d6d0a6007225cd7e3c8c8514b6572375c99a6f8282",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Windows-0ce29be608-amd64-clang-pgo.zip"
+        },
+        {
+            "name": "Eden-Windows-0ce29be608-amd64-gcc-standard.zip",
+            "size": 44505042,
+            "digest": "sha256:d933887af5d566b0b0602d574406eabe91b014f3b50842dbe0c0f298d390cc9a",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Windows-0ce29be608-amd64-gcc-standard.zip"
+        },
+        {
+            "name": "Eden-Linux-0ce29be608-legacy-clang-pgo.AppImage",
+            "size": 70847280,
+            "digest": "sha256:84dbd0532893d875423ee03a630a627e2f8edc8e68727ef849ad5636aaa1d97e",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-legacy-clang-pgo.AppImage"
+        },
+        {
+            "name": "Eden-Linux-aarch64-gcc-standard.AppImage.zsync",
+            "size": 231535,
+            "digest": "sha256:9a1761550776d97636ee151c5e4c592f4c5df480e09686dcc64254a78c6283cb",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-aarch64-gcc-standard.AppImage.zsync"
+        },
+        {
+            "name": "Eden-Linux-0ce29be608-rog-ally-gcc-standard.AppImage",
+            "size": 70558096,
+            "digest": "sha256:6510557f11f5a67e9597e53908bfc28762d26d4cbea6657649f8722e8490ddd3",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-rog-ally-gcc-standard.AppImage"
+        },
+        {
+            "name": "Eden-Linux-amd64-clang-pgo.AppImage.zsync",
+            "size": 242676,
+            "digest": "sha256:b6cb72b90d64f9551136f0fab002de3d1b1526ced31716923382f1b6ef47011e",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-amd64-clang-pgo.AppImage.zsync"
+        },
+        {
+            "name": "Eden-Linux-0ce29be608-steamdeck-clang-pgo.AppImage",
+            "size": 71201771,
+            "digest": "sha256:53a0b55321b552a73675aa4f2eab40ade637ce58d18579cb396bf49fc3f2a8e1",
+            "created_at": "2026-09-17T21:44:30+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-steamdeck-clang-pgo.AppImage"
+        },
+        {
+            "name": "Eden-Windows-0ce29be608-rog-ally-gcc-standard.zip",
+            "size": 44201846,
+            "digest": "sha256:aba95b3e587a2312a34202b093f2f3cd26987f296c2f9afa6dce7b129e163460",
+            "created_at": "2026-09-17T21:44:31+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Windows-0ce29be608-rog-ally-gcc-standard.zip"
+        },
+        {
+            "name": "Eden-0ce29be608.torrent",
+            "size": 23309,
+            "digest": "sha256:820176f5bbfa82187a4ea28977d75f5c25a0551f8cb191985080b1a254b93493",
+            "created_at": "2026-09-17T21:44:31+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-0ce29be608.torrent"
+        },
+        {
+            "name": "Eden-Windows-0ce29be608-arm64-clang-pgo.zip",
+            "size": 32769313,
+            "digest": "sha256:f08995d74234a5307ce5b250b8c3dcee79412f9a98bdb6b38e01dc11aef56442",
+            "created_at": "2026-09-17T21:44:31+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Windows-0ce29be608-arm64-clang-pgo.zip"
+        },
+        {
+            "name": "Eden-Windows-0ce29be608-amd64-msvc-standard.zip",
+            "size": 33456547,
+            "digest": "sha256:147791f728600b91a4199c9202d4823fea8955bbdb9d4015ec09cf8bf7e928d2",
+            "created_at": "2026-09-17T21:44:31+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Windows-0ce29be608-amd64-msvc-standard.zip"
+        },
+        {
+            "name": "Eden-Windows-0ce29be608-rog-ally-clang-pgo.zip",
+            "size": 40353873,
+            "digest": "sha256:8069242792267b987b811f3858aef2b9d3a4423be86a767e5ab0caab6ac1d7cb",
+            "created_at": "2026-09-17T21:44:31+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Windows-0ce29be608-rog-ally-clang-pgo.zip"
+        },
+        {
+            "name": "Eden-Linux-0ce29be608-rog-ally-clang-pgo.AppImage",
+            "size": 69908039,
+            "digest": "sha256:b89b3082d56bd22b7945395d80edb3710efa268bb9344e69dbab4af2ea66084f",
+            "created_at": "2026-09-17T21:44:31+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-rog-ally-clang-pgo.AppImage"
+        },
+        {
+            "name": "Eden-Android-0ce29be608-optimized.apk",
+            "size": 28030713,
+            "digest": "sha256:bcf5f5f7a67da7655d11f74a4b8ad9e15f51e61fef6114680a5940c98304bb1b",
+            "created_at": "2026-09-17T21:44:31+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Android-0ce29be608-optimized.apk"
+        },
+        {
+            "name": "Eden-Linux-rog-ally-gcc-standard.AppImage.zsync",
+            "size": 241407,
+            "digest": "sha256:ece39a107f0ece51d0eb974f08ae72a0f00c7ae165ae18a7538dd304161c37ea",
+            "created_at": "2026-09-17T21:44:31+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-rog-ally-gcc-standard.AppImage.zsync"
+        },
+        {
+            "name": "Eden-Linux-0ce29be608-aarch64-gcc-standard.AppImage",
+            "size": 67670318,
+            "digest": "sha256:2faef6cda5533d855ea7d27c52876f150ff5fcc1f9645ba00625c1dcc5dd27e1",
+            "created_at": "2026-09-17T21:44:31+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-aarch64-gcc-standard.AppImage"
+        },
+        {
+            "name": "Eden-Linux-0ce29be608-steamdeck-gcc-standard.AppImage",
+            "size": 72339399,
+            "digest": "sha256:a11212b1ed682bebaca5519a563dae2a709efcbf7993773b3d1c91e2e3bd414e",
+            "created_at": "2026-09-17T21:44:31+00:00",
+            "browser_download_url": "https://nightly.eden-emu.dev/v1789678126.0ce29be608/Eden-Linux-0ce29be608-steamdeck-gcc-standard.AppImage"
+        }
+    ]
+}

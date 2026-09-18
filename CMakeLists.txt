@@ -5,7 +5,8 @@ project(jacinth LANGUAGES C CXX)
 include(CMakeDependentOption)
 
 # options
-option(JACINTH_BUILD_TESTS "Build Jacinth's test application" ON)
+option(JACINTH_BUILD_TESTS "Build Jacinth's test application"
+    ${PROJECT_IS_TOP_LEVEL})
 option(JACINTH_USE_REFLECTION
     "Use C++26 reflection features instead of Boost.PFR" OFF)
 cmake_dependent_option(JACINTH_USE_SYSTEM_PFR

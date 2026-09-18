@@ -1,6 +1,7 @@
 module;
 
 #include <cstdint>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -47,6 +48,17 @@ struct is_vector<std::vector<T, Alloc>> : std::true_type {};
 template <typename T>
 inline constexpr bool is_vector_v = is_vector<T>::value;
 
+// optional specializations
+template <typename T>
+struct is_optional : std::false_type {};
+
+template <typename T>
+struct is_optional<std::optional<T>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_optional_v = is_optional<T>::value;
+
+// used for static assert
 template <typename...>
 inline constexpr bool always_false = false;
 
@@ -72,8 +84,9 @@ void parseValue(yyjson_val *val, T &field)
             field = FieldType(yyjson_get_uint(val));
         else if (yyjson_is_int(val))
             field = FieldType(yyjson_get_int(val));
-        // vectors
-    } else if constexpr (is_vector_v<FieldType>) {
+    }
+    // vectors
+    else if constexpr (is_vector_v<FieldType>) {
         if (yyjson_is_arr(val)) {
             using ElemType = typename FieldType::value_type;
             field.clear();
@@ -88,6 +101,15 @@ void parseValue(yyjson_val *val, T &field)
                 field.push_back(std::move(item));
             }
         }
+    }
+    // optionals
+    else if constexpr (is_optional_v<FieldType>) {
+        if (val && !yyjson_is_null(val)) {
+            typename FieldType::value_type item;
+            parseValue(val, item);
+            field = std::move(item);
+        } else
+            field.reset();
     }
     // nested structs, etc.
     else if constexpr (std::is_aggregate_v<FieldType>) {
@@ -140,15 +162,25 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
             yyjson_mut_set_uint(val, uint64_t(field));
         else
             yyjson_mut_set_int(val, int64_t(field));
-        // vectors
-    } else if constexpr (is_vector_v<FieldType>) {
+    }
+    // vectors
+    else if constexpr (is_vector_v<FieldType>) {
         yyjson_mut_set_arr(val);
         for (const auto &item : field) {
             auto *elem = yyjson_mut_null(doc);
             yyjson_mut_arr_append(val, elem);
             writeValue(doc, elem, item);
         }
-    } else if constexpr (std::is_aggregate_v<FieldType>) {
+    }
+    // optionals
+    else if constexpr (is_optional_v<FieldType>) {
+        if (field.has_value())
+            writeValue(doc, val, *field);
+        else
+            yyjson_mut_set_null(val);
+    }
+    // nested structs, etc
+    else if constexpr (std::is_aggregate_v<FieldType>) {
         yyjson_mut_set_obj(val);
 #ifdef JACINTH_USE_REFLECTION
         template for (constexpr auto f :
@@ -201,7 +233,7 @@ public:
         return {m_doc, yyjson_obj_getn(m_val, key.data(), key.size())};
     }
 
-    value operator[](const char* key) const
+    value operator[](const char *key) const
     {
         return operator[](std::string_view{key});
     }
@@ -294,7 +326,6 @@ public:
     {
         return root()[i];
     }
-
 
     // root obj testers
     bool is_object() const
@@ -534,7 +565,7 @@ public:
         return root()[key];
     }
 
-    mutable_value operator[](const char* key)
+    mutable_value operator[](const char *key)
     {
         return root()[key];
     }

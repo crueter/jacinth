@@ -14,6 +14,7 @@ struct Asset {
     std::string digest;
     std::string created_at;
     std::string browser_download_url;
+    std::optional<std::string> node_id;
 };
 
 struct Release {
@@ -46,8 +47,8 @@ int main()
 
         for (const auto &a : std::as_const(release.assets)) {
             std::println("    Asset {}", i);
-            // std::println("      Name: {}", a.name);
-            // std::println("      Size: {}", a.size);
+            std::println("      Name: {}", a.name);
+            std::println("      Node ID: {}", a.node_id.value_or("Unknown"));
             // std::println("      Digest: {}", a.digest);
             // std::println("      URL: {}", a.browser_download_url);
 
