@@ -634,14 +634,29 @@ public:
         return json{m};
     }
 
-    std::string dump(write_opts opts = {})
+    // allocating dump
+    std::string dump(write_opts opts = {}) {
+        std::string s;
+        dump_to(s, opts);
+        return s;
+    }
+
+    // non-allocating dump
+    void dump_to(std::string &s, write_opts opts = {})
     {
         auto *root = yyjson_mut_doc_get_root(m_doc);
         std::size_t len = 0;
         char *buf = root ? yyjson_mut_val_write(root, opts.to_flags(), &len) : nullptr;
-        std::string s(buf ? buf : "", buf ? len : 0);
+        s.assign(buf ? buf : "", buf ? len : 0);
         free(buf);
-        return s;
+    }
+
+    // Write directly from an object (non-allocating)
+    template <typename T>
+    static void dump_to(const T &value, std::string &s, write_opts opts = {})
+    {
+        json json = value;
+        json.dump_to(s, opts);
     }
 
     // Write directly from an object

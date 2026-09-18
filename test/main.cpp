@@ -142,7 +142,9 @@ int main()
         };
 
         std::println("MapStruct:");
-        std::println("{}", jacinth::json::dump(s, {.pretty = true}));
+        std::string str;
+        jacinth::json::dump_to(s, str, {.pretty = true});
+        std::println("{}", str);
     }
 
     // TODO: test doc, struct write
