@@ -17,28 +17,6 @@ module;
 
 export module jacinth;
 
-export namespace jacinth
-{
-
-// iterator forwarders
-template <typename Iter>
-struct iterable_view {
-    Iter b, e;
-    Iter begin() const
-    {
-        return b;
-    }
-    Iter end() const
-    {
-        return e;
-    }
-};
-
-class const_array_iterator;
-class const_object_iterator;
-class mut_array_iterator;
-class mut_object_iterator;
-
 // vector specializations
 template <typename T>
 struct is_vector : std::false_type {};
@@ -72,32 +50,6 @@ inline constexpr bool is_map_v = is_map<T>::value;
 // used for static assert
 template <typename...>
 inline constexpr bool always_false = false;
-
-// forwarder for yyjson_write_flag
-struct write_opts {
-    bool pretty;
-    bool escapeUnicode;
-    bool escapeSlashes;
-    bool allowInfAndNan;
-    bool writeInfAndNanAsNull;
-    bool allowInvalidUnicode;
-    bool prettyTwoSpaces;
-    bool endingNewline;
-
-    yyjson_write_flag to_flags() const
-    {
-        yyjson_write_flag f = 0;
-        f |= pretty ? YYJSON_WRITE_PRETTY : 0;
-        f |= escapeUnicode ? YYJSON_WRITE_ESCAPE_UNICODE : 0;
-        f |= escapeSlashes ? YYJSON_WRITE_ESCAPE_SLASHES : 0;
-        f |= allowInfAndNan ? YYJSON_WRITE_ALLOW_INF_AND_NAN : 0;
-        f |= writeInfAndNanAsNull ? YYJSON_WRITE_INF_AND_NAN_AS_NULL : 0;
-        f |= allowInvalidUnicode ? YYJSON_WRITE_ALLOW_INVALID_UNICODE : 0;
-        f |= prettyTwoSpaces ? YYJSON_WRITE_PRETTY_TWO_SPACES : 0;
-        f |= endingNewline ? YYJSON_WRITE_NEWLINE_AT_END : 0;
-        return f;
-    }
-};
 
 template <typename T>
 void parseValue(yyjson_val *val, T &field)
@@ -192,7 +144,7 @@ void parseValue(yyjson_val *val, T &field)
     }
 }
 
-// TODO: handle variant, optional?
+// TODO: handle variant?
 template <typename T>
 void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
 {
@@ -272,6 +224,54 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
         static_assert(always_false<FieldType>, "jacinth: unsupported type for JSON serialization");
     }
 }
+
+export namespace jacinth
+{
+
+// iterator forwarders
+template <typename Iter>
+struct iterable_view {
+    Iter b, e;
+    Iter begin() const
+    {
+        return b;
+    }
+    Iter end() const
+    {
+        return e;
+    }
+};
+
+class const_array_iterator;
+class const_object_iterator;
+class mut_array_iterator;
+class mut_object_iterator;
+
+// forwarder for yyjson_write_flag
+struct write_opts {
+    bool pretty;
+    bool escapeUnicode;
+    bool escapeSlashes;
+    bool allowInfAndNan;
+    bool writeInfAndNanAsNull;
+    bool allowInvalidUnicode;
+    bool prettyTwoSpaces;
+    bool endingNewline;
+
+    yyjson_write_flag to_flags() const
+    {
+        yyjson_write_flag f = 0;
+        f |= pretty ? YYJSON_WRITE_PRETTY : 0;
+        f |= escapeUnicode ? YYJSON_WRITE_ESCAPE_UNICODE : 0;
+        f |= escapeSlashes ? YYJSON_WRITE_ESCAPE_SLASHES : 0;
+        f |= allowInfAndNan ? YYJSON_WRITE_ALLOW_INF_AND_NAN : 0;
+        f |= writeInfAndNanAsNull ? YYJSON_WRITE_INF_AND_NAN_AS_NULL : 0;
+        f |= allowInvalidUnicode ? YYJSON_WRITE_ALLOW_INVALID_UNICODE : 0;
+        f |= prettyTwoSpaces ? YYJSON_WRITE_PRETTY_TWO_SPACES : 0;
+        f |= endingNewline ? YYJSON_WRITE_NEWLINE_AT_END : 0;
+        return f;
+    }
+};
 
 // TODO: is_<type> funcs
 
