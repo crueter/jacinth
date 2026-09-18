@@ -378,17 +378,17 @@ public:
     }
 
     // access
-    value operator[](std::string_view key)
+    value operator[](std::string_view key) const
     {
         return root()[key];
     }
 
-    value operator[](const char *key)
+    value operator[](const char *key) const
     {
         return root()[key];
     }
 
-    value operator[](std::size_t i)
+    value operator[](std::size_t i) const
     {
         return root()[i];
     }
