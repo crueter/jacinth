@@ -7,7 +7,6 @@ module;
 #include <vector>
 
 #include "yyjson.h"
-#include "yyjson/src/yyjson.h"
 
 #ifdef JACINTH_USE_REFLECTION
 #include <meta>
