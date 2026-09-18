@@ -9,6 +9,7 @@ An experimental JSON library that aims to be incredibly simple and easy to use, 
 This library will essentially aim to be a wrapper around [yyjson](https://github.com/ibireme/yyjson) (one of the fastest JSON libraries in the world!). The public API and design patterns are not yet decided, but at a minimum, Jacinth will support:
 
 - nlohmann-like in-place JSON object API
+  - This will probably just be an RAII wrapper around yyjson_doc
 - Glaze/Reflect-like compile-time struct reflection
 - JSON serialization *and* deserialization
 - C++20 module support, possibly with `import std`
@@ -21,3 +22,9 @@ Nice to haves that are not guaranteed, but may be added in the future:
 - JS-like append/remove API, and other operator overload sauce
 - C++20 `std::format` specializations for JSON objects
 - Deep, robust error handling
+
+## Currently Implemented
+
+This library is super WIP so don't expect much of anything for now.
+
+- Struct reflection reads
