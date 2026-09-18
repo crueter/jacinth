@@ -49,9 +49,7 @@ endif()
 # yyjson
 if(JACINTH_USE_SYSTEM_YYJSON)
     find_package(yyjson REQUIRED)
-endif()
-
-if(NOT TARGET yyjson)
+else()
     add_library(yyjson OBJECT
         yyjson/src/yyjson.h yyjson/src/yyjson.c)
     target_include_directories(yyjson PUBLIC yyjson/src)
