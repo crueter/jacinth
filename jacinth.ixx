@@ -129,6 +129,7 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
             writeValue(doc, elem, item);
         }
     } else if constexpr (std::is_aggregate_v<FieldType>) {
+        yyjson_mut_set_obj(val);
 #ifdef JACINTH_USE_REFLECTION
         template for (constexpr auto f :
                       std::define_static_array(std::meta::nonstatic_data_members_of(
