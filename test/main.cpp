@@ -73,11 +73,23 @@ int main()
         }
     }
 
+    std::vector<Asset> newAssets = {
+        Asset{
+            .name = "Test-Asset.tar.gz",
+            .size = 6791230,
+            .digest = "sha256:abcdef1234567890",
+            .created_at = "tomorrow",
+            .browser_download_url = "https://example.com",
+        }
+    };
+
     // Create a JSON from scratch
     {
         auto json = jacinth::json();
         json["hi"] = "Hello World!",
         json["creator"] = "Jacinth, by crueter";
+        json["files"] = newAssets;
+
         auto dumped = json.dump();
         std::println("Dumped: {}", dumped);
     }
@@ -88,20 +100,19 @@ int main()
         json["name"] = "Custom Name";
         json["body"] = "Release description :)";
 
-        std::vector<Asset> newAssets = {
-            Asset{
-                .name = "Test-Asset.tar.gz",
-                .size = 6791230,
-                .digest = "sha256:abcdef1234567890",
-                .created_at = "tomorrow",
-                .browser_download_url = "https://example.com",
-            }
-        };
-
         // TODO: remove, etc. methods
-        json["assets"] = newAssets;
+        const auto curAssets = json["assets"];
+        json["assets"].remove(1, curAssets.size() - 1);
 
         std::println("Mutated dump: {}", json.dump());
+
+        json["assets"].clear();
+
+        std::println("Mutated dump, cleared assets: {}", json.dump());
+
+        json.remove("html_url");
+
+        std::println("Mutated dump, removed html_url: {}", json.dump());
     }
 
     // TODO: test doc, struct write

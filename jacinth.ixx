@@ -150,8 +150,7 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
         });
 #endif
     } else {
-        static_assert(always_false<FieldType>,
-                      "jacinth: unsupported type for JSON serialization");
+        static_assert(always_false<FieldType>, "jacinth: unsupported type for JSON serialization");
     }
 }
 
@@ -285,6 +284,42 @@ public:
         return t;
     }
 
+    // TODO: append/prepend/insert, set?
+
+    // mutation
+    bool remove(std::string_view key)
+    {
+        ensure_object();
+        return yyjson_mut_obj_remove_keyn(m_val, key.data(), key.size());
+    }
+
+    // TODO: ranges?
+    bool remove(std::size_t i)
+    {
+        ensure_array();
+        return yyjson_mut_arr_remove(m_val, i);
+    }
+
+    bool remove(std::size_t pos, std::size_t n) {
+        ensure_array();
+        return yyjson_mut_arr_remove_range(m_val, pos, n);
+    }
+
+    bool clear()
+    {
+        return yyjson_mut_is_obj(m_val) ? yyjson_mut_obj_clear(m_val) : yyjson_mut_arr_clear(m_val);
+    }
+
+    mutable_value pop_back()
+    {
+        return {m_doc, yyjson_mut_arr_remove_last(m_val)};
+    }
+
+    mutable_value pop_front()
+    {
+        return {m_doc, yyjson_mut_arr_remove_first(m_val)};
+    }
+
     // indexing
     mutable_value operator[](std::string_view key)
     {
@@ -333,7 +368,8 @@ class json {
     explicit json(yyjson_mut_doc *d) noexcept : m_doc(d) {}
 
 public:
-    json() : m_doc(yyjson_mut_doc_new(nullptr)) {
+    json() : m_doc(yyjson_mut_doc_new(nullptr))
+    {
         yyjson_mut_doc_set_root(m_doc, yyjson_mut_null(m_doc));
     }
 
@@ -408,6 +444,36 @@ public:
     mutable_value operator[](std::size_t i)
     {
         return root()[i];
+    }
+
+    bool remove(std::string_view key)
+    {
+        return root().remove(key);
+    }
+
+    // TODO: ranges?
+    bool remove(std::size_t i)
+    {
+        return root().remove(i);
+    }
+
+    bool remove(std::size_t pos, std::size_t n) {
+        return root().remove(pos, n);
+    }
+
+    bool clear()
+    {
+        return root().clear();
+    }
+
+    mutable_value pop_back()
+    {
+        return root().pop_back();
+    }
+
+    mutable_value pop_front()
+    {
+        return root().pop_front();
     }
 };
 
