@@ -201,6 +201,11 @@ public:
         return {m_doc, yyjson_obj_getn(m_val, key.data(), key.size())};
     }
 
+    value operator[](const char* key) const
+    {
+        return operator[](std::string_view{key});
+    }
+
     value operator[](std::size_t i) const
     {
         return {m_doc, yyjson_arr_get(m_val, i)};
@@ -259,7 +264,7 @@ public:
     operator T() const
     {
         T t;
-        parseValue(root(), t);
+        parseValue(m_doc->root, t);
         return t;
     }
 
@@ -273,6 +278,23 @@ public:
     {
         yyjson_doc_free(m_doc);
     }
+
+    // access
+    value operator[](std::string_view key)
+    {
+        return root()[key];
+    }
+
+    value operator[](const char *key)
+    {
+        return root()[key];
+    }
+
+    value operator[](std::size_t i)
+    {
+        return root()[i];
+    }
+
 
     // root obj testers
     bool is_object() const
@@ -326,7 +348,7 @@ public:
     }
 
     template <typename T>
-    explicit operator T() const
+    operator T() const
     {
         T t;
         // parseValue can't take mutable values...
@@ -387,6 +409,11 @@ public:
         }
 
         return {m_doc, v};
+    }
+
+    mutable_value operator[](const char *key)
+    {
+        return operator[](std::string_view{key});
     }
 
     mutable_value operator[](std::size_t i)
@@ -503,6 +530,11 @@ public:
     }
 
     mutable_value operator[](std::string_view key)
+    {
+        return root()[key];
+    }
+
+    mutable_value operator[](const char* key)
     {
         return root()[key];
     }

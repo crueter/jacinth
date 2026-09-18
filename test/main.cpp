@@ -58,7 +58,7 @@ int main()
     // Read from a JSON
     // TODO: fix doc
     {
-        auto json = jacinth::json::read(data);
+        auto json = jacinth::doc::read(data);
 
         // TODO: std::formatter specializations
         std::println("Release {}", std::string(json["name"]));
