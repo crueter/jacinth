@@ -80,6 +80,7 @@ int main()
         .digest = "sha256:abcdef1234567890",
         .created_at = "tomorrow",
         .browser_download_url = "https://example.com",
+        .node_id = "node123256789abcdef"
     }};
 
     // Create a JSON from scratch
@@ -116,6 +117,12 @@ int main()
         json.remove("html_url");
 
         std::println("Mutated dump, removed html_url: {}", json.dump());
+    }
+
+    // Direct write from a struct
+    {
+        std::println("Direct write from newAssets:");
+        std::println("  {}", jacinth::json::dump(newAssets));
     }
 
     // TODO: test doc, struct write

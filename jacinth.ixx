@@ -498,6 +498,12 @@ public:
     }
 
     explicit json(doc const &d) : json(yyjson_doc_mut_copy(d, nullptr)) {}
+
+    template<typename T>
+    json(const T &v) : json() {
+        operator=(v);
+    }
+
     ~json()
     {
         yyjson_mut_doc_free(m_doc);
@@ -543,6 +549,13 @@ public:
         std::string s(buf ? buf : "", buf ? len : 0);
         free(buf);
         return s;
+    }
+
+    // Write directly from an object
+    template <typename T>
+    static std::string dump(const T& value, yyjson_write_flag flag = 0) {
+        json json = value;
+        return json.dump(flag);
     }
 
     // freeze this into a read-only doc
