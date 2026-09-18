@@ -32,6 +32,22 @@ struct MapStruct {
     std::map<std::string, uint32_t> values;
 };
 
+namespace {
+
+struct CustomStruct {
+    std::string name;
+};
+
+void to_json(jacinth::mutable_value json, const CustomStruct &custom) {
+    json["derived"] = std::format("Derived value from to_json: {}", custom.name);
+}
+
+void from_json(const jacinth::value &json, CustomStruct &custom) {
+    custom.name = std::format("Derived value from from_json: {}", json["name"].as<std::string>());
+}
+
+}
+
 int main()
 {
     std::ifstream file("release.json");
@@ -145,6 +161,19 @@ int main()
         std::string str;
         jacinth::json::dump_to(s, str, {.pretty = true});
         std::println("{}", str);
+    }
+
+    // Custom to/from json
+    {
+        CustomStruct s = {
+            "CustomStruct Test"
+        };
+
+        const auto json_str = "{\"name\": \"CustomStruct JSON\"}";
+
+        std::println("to_json: {}", jacinth::json::dump(s));
+        CustomStruct newCustom = jacinth::json::read(json_str);
+        std::println("from_json: {}", newCustom.name);
     }
 
     // TODO: test doc, struct write

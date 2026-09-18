@@ -17,213 +17,10 @@ module;
 
 export module jacinth;
 
-// vector specializations
 template <typename T>
-struct is_vector : std::false_type {};
-
-template <typename T, typename Alloc>
-struct is_vector<std::vector<T, Alloc>> : std::true_type {};
-
+void parseValue(yyjson_val *val, T &field);
 template <typename T>
-inline constexpr bool is_vector_v = is_vector<T>::value;
-
-// optional specializations
-template <typename T>
-struct is_optional : std::false_type {};
-
-template <typename T>
-struct is_optional<std::optional<T>> : std::true_type {};
-
-template <typename T>
-inline constexpr bool is_optional_v = is_optional<T>::value;
-
-// map specializations
-template <typename T>
-struct is_map : std::false_type {};
-
-template <typename Key, typename Value, typename Compare, typename Alloc>
-struct is_map<std::map<Key, Value, Compare, Alloc>> : std::true_type {};
-
-template <typename T>
-inline constexpr bool is_map_v = is_map<T>::value;
-
-// used for static assert
-template <typename...>
-inline constexpr bool always_false = false;
-
-template <typename T>
-void parseValue(yyjson_val *val, T &field)
-{
-    if (!val)
-        return;
-
-    using FieldType = std::decay_t<T>;
-
-    if constexpr (std::is_same_v<FieldType, std::string>) {
-        if (yyjson_is_str(val))
-            field.assign(yyjson_get_str(val), yyjson_get_len(val));
-    } else if constexpr (std::is_floating_point_v<FieldType>) {
-        if (yyjson_is_num(val))
-            field = FieldType(yyjson_get_num(val));
-    } else if constexpr (std::is_same_v<FieldType, bool>) {
-        if (yyjson_is_bool(val))
-            field = yyjson_get_bool(val);
-    } else if constexpr (std::is_integral_v<FieldType>) {
-        if (yyjson_is_uint(val))
-            field = FieldType(yyjson_get_uint(val));
-        else if (yyjson_is_int(val))
-            field = FieldType(yyjson_get_int(val));
-    }
-    // vectors
-    else if constexpr (is_vector_v<FieldType>) {
-        if (yyjson_is_arr(val)) {
-            using ElemType = typename FieldType::value_type;
-            field.clear();
-            field.reserve(yyjson_arr_size(val));
-
-            size_t idx, max;
-            yyjson_val *elem;
-            yyjson_arr_foreach(val, idx, max, elem)
-            {
-                ElemType item{};
-                parseValue(elem, item);
-                field.push_back(std::move(item));
-            }
-        }
-    }
-    // optionals
-    else if constexpr (is_optional_v<FieldType>) {
-        if (val && !yyjson_is_null(val)) {
-            typename FieldType::value_type item;
-            parseValue(val, item);
-            field = std::move(item);
-        } else
-            field.reset();
-    }
-    // maps
-    else if constexpr (is_map_v<FieldType>) {
-        // TODO(crueter): Really need better err handling
-        if (!yyjson_is_obj(val))
-            return;
-        using MappedType = typename FieldType::mapped_type;
-        field.clear();
-
-        yyjson_obj_iter iter;
-        yyjson_obj_iter_init(val, &iter);
-        yyjson_val *key;
-        while ((key = yyjson_obj_iter_next(&iter))) {
-            auto *sub = yyjson_obj_iter_get_val(key);
-            MappedType item;
-            parseValue(sub, item);
-            field.emplace(std::string_view(yyjson_get_str(key), yyjson_get_len(key)),
-                          std::move(item));
-        }
-    }
-    // nested structs, etc.
-    else if constexpr (std::is_aggregate_v<FieldType>) {
-        if (yyjson_is_obj(val))
-#ifdef JACINTH_USE_REFLECTION
-            template for (constexpr auto f :
-                          std::define_static_array(std::meta::nonstatic_data_members_of(
-                              ^^T, std::meta::access_context::current())))
-            {
-                constexpr auto name = std::meta::identifier_of(f);
-                yyjson_val *sub = yyjson_obj_getn(val, name.data(), name.size());
-                if (sub) {
-                    parseValue(sub, field.[:f:]);
-                }
-            }
-
-#else
-            boost::pfr::for_each_field_with_name(
-                field, [val](std::string_view name, auto &sub_field) {
-                    yyjson_val *sub = yyjson_obj_getn(val, name.data(), name.size());
-                    parseValue(sub, sub_field);
-                });
-#endif
-    }
-}
-
-// TODO: handle variant?
-template <typename T>
-void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
-{
-    if (!val)
-        return;
-
-    using FieldType = std::decay_t<T>;
-
-    if constexpr (std::is_same_v<FieldType, std::string> ||
-                  std::is_same_v<FieldType, std::string_view>) {
-        auto *str = yyjson_mut_strncpy(doc, field.data(), field.size());
-        yyjson_mut_set_strn(val, yyjson_mut_get_str(str), yyjson_mut_get_len(str));
-    } else if constexpr (std::is_same_v<FieldType, char *> ||
-                         std::is_same_v<FieldType, const char *>) {
-        auto *str = yyjson_mut_strcpy(doc, field);
-        yyjson_mut_set_strn(val, yyjson_mut_get_str(str), yyjson_mut_get_len(str));
-    } else if constexpr (std::is_floating_point_v<FieldType>) {
-        if constexpr (std::is_same_v<FieldType, float>)
-            yyjson_mut_set_float(val, float(field));
-        else
-            yyjson_mut_set_double(val, double(field));
-    } else if constexpr (std::is_same_v<FieldType, bool>) {
-        yyjson_mut_set_bool(val, field);
-    } else if constexpr (std::is_integral_v<FieldType>) {
-        if constexpr (std::is_unsigned_v<FieldType>)
-            yyjson_mut_set_uint(val, uint64_t(field));
-        else
-            yyjson_mut_set_int(val, int64_t(field));
-    }
-    // vectors
-    else if constexpr (is_vector_v<FieldType>) {
-        yyjson_mut_set_arr(val);
-        for (const auto &item : field) {
-            auto *elem = yyjson_mut_null(doc);
-            yyjson_mut_arr_append(val, elem);
-            writeValue(doc, elem, item);
-        }
-    }
-    // optionals
-    else if constexpr (is_optional_v<FieldType>) {
-        if (field.has_value())
-            writeValue(doc, val, *field);
-        else
-            yyjson_mut_set_null(val);
-    }
-    // maps
-    else if constexpr (is_map_v<FieldType>) {
-        yyjson_mut_set_obj(val);
-        for (const auto &[k, v] : field) {
-            auto *sub = yyjson_mut_null(doc);
-            auto *key = yyjson_mut_strncpy(doc, k.data(), k.size());
-            yyjson_mut_obj_put(val, key, sub);
-            writeValue(doc, sub, v);
-        }
-    }
-    // nested structs, etc
-    else if constexpr (std::is_aggregate_v<FieldType>) {
-        yyjson_mut_set_obj(val);
-#ifdef JACINTH_USE_REFLECTION
-        template for (constexpr auto f :
-                      std::define_static_array(std::meta::nonstatic_data_members_of(
-                          ^^T, std::meta::access_context::current())))
-        {
-            constexpr auto name = std::meta::identifier_of(f);
-            auto *sub = yyjson_mut_null(doc);
-            yyjson_mut_obj_add_val(doc, val, name.data(), sub);
-            writeValue(doc, sub, field.[:f:]);
-        }
-#else
-        boost::pfr::for_each_field_with_name(field, [&](std::string_view name, auto &sub_field) {
-            auto *sub = yyjson_mut_null(doc);
-            yyjson_mut_obj_add_val(doc, val, name.data(), sub);
-            writeValue(doc, sub, sub_field);
-        });
-#endif
-    } else {
-        static_assert(always_false<FieldType>, "jacinth: unsupported type for JSON serialization");
-    }
-}
+void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field);
 
 export namespace jacinth
 {
@@ -613,9 +410,7 @@ public:
     template <typename T>
     operator T() const
     {
-        T t;
-        parseValue(root(), t);
-        return t;
+        return root().template as<T>();
     }
 
     // explicit conv
@@ -636,7 +431,8 @@ public:
     }
 
     // allocating dump
-    std::string dump(write_opts opts = {}) {
+    std::string dump(write_opts opts = {})
+    {
         std::string s;
         dump_to(s, opts);
         return s;
@@ -920,3 +716,220 @@ inline iterable_view<mut_array_iterator> json::as_array()
 }
 
 } // namespace jacinth
+
+// vector specializations
+template <typename T>
+struct is_vector : std::false_type {};
+
+template <typename T, typename Alloc>
+struct is_vector<std::vector<T, Alloc>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_vector_v = is_vector<T>::value;
+
+// optional specializations
+template <typename T>
+struct is_optional : std::false_type {};
+
+template <typename T>
+struct is_optional<std::optional<T>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_optional_v = is_optional<T>::value;
+
+// map specializations
+template <typename T>
+struct is_map : std::false_type {};
+
+template <typename Key, typename Value, typename Compare, typename Alloc>
+struct is_map<std::map<Key, Value, Compare, Alloc>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_map_v = is_map<T>::value;
+
+// used for static assert
+template <typename...>
+inline constexpr bool always_false = false;
+
+// impls
+template <typename T>
+void parseValue(yyjson_val *val, T &field)
+{
+    if (!val)
+        return;
+
+    using FieldType = std::decay_t<T>;
+
+    if constexpr (std::is_same_v<FieldType, std::string>) {
+        if (yyjson_is_str(val))
+            field.assign(yyjson_get_str(val), yyjson_get_len(val));
+    } else if constexpr (std::is_floating_point_v<FieldType>) {
+        if (yyjson_is_num(val))
+            field = FieldType(yyjson_get_num(val));
+    } else if constexpr (std::is_same_v<FieldType, bool>) {
+        if (yyjson_is_bool(val))
+            field = yyjson_get_bool(val);
+    } else if constexpr (std::is_integral_v<FieldType>) {
+        if (yyjson_is_uint(val))
+            field = FieldType(yyjson_get_uint(val));
+        else if (yyjson_is_int(val))
+            field = FieldType(yyjson_get_int(val));
+    }
+    // vectors
+    else if constexpr (is_vector_v<FieldType>) {
+        if (yyjson_is_arr(val)) {
+            using ElemType = typename FieldType::value_type;
+            field.clear();
+            field.reserve(yyjson_arr_size(val));
+
+            size_t idx, max;
+            yyjson_val *elem;
+            yyjson_arr_foreach(val, idx, max, elem)
+            {
+                ElemType item{};
+                parseValue(elem, item);
+                field.push_back(std::move(item));
+            }
+        }
+    }
+    // optionals
+    else if constexpr (is_optional_v<FieldType>) {
+        if (val && !yyjson_is_null(val)) {
+            typename FieldType::value_type item;
+            parseValue(val, item);
+            field = std::move(item);
+        } else
+            field.reset();
+    }
+    // maps
+    else if constexpr (is_map_v<FieldType>) {
+        // TODO(crueter): Really need better err handling
+        if (!yyjson_is_obj(val))
+            return;
+        using MappedType = typename FieldType::mapped_type;
+        field.clear();
+
+        yyjson_obj_iter iter;
+        yyjson_obj_iter_init(val, &iter);
+        yyjson_val *key;
+        while ((key = yyjson_obj_iter_next(&iter))) {
+            auto *sub = yyjson_obj_iter_get_val(key);
+            MappedType item;
+            parseValue(sub, item);
+            field.emplace(std::string_view(yyjson_get_str(key), yyjson_get_len(key)),
+                          std::move(item));
+        }
+    }
+    // from_json ADL
+    else if constexpr (requires { from_json(jacinth::value{nullptr, nullptr}, field); }) {
+        from_json(jacinth::value{nullptr, val}, field);
+    }
+    // nested structs, etc.
+    else if constexpr (std::is_aggregate_v<FieldType>) {
+        if (yyjson_is_obj(val))
+#ifdef JACINTH_USE_REFLECTION
+            template for (constexpr auto f :
+                          std::define_static_array(std::meta::nonstatic_data_members_of(
+                              ^^T, std::meta::access_context::current())))
+            {
+                constexpr auto name = std::meta::identifier_of(f);
+                yyjson_val *sub = yyjson_obj_getn(val, name.data(), name.size());
+                if (sub) {
+                    parseValue(sub, field.[:f:]);
+                }
+            }
+
+#else
+            boost::pfr::for_each_field_with_name(
+                field, [val](std::string_view name, auto &sub_field) {
+                    yyjson_val *sub = yyjson_obj_getn(val, name.data(), name.size());
+                    parseValue(sub, sub_field);
+                });
+#endif
+    }
+}
+
+// TODO: handle variant?
+template <typename T>
+void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
+{
+    if (!val)
+        return;
+
+    using FieldType = std::decay_t<T>;
+
+    if constexpr (std::is_same_v<FieldType, std::string> ||
+                  std::is_same_v<FieldType, std::string_view>) {
+        auto *str = yyjson_mut_strncpy(doc, field.data(), field.size());
+        yyjson_mut_set_strn(val, yyjson_mut_get_str(str), yyjson_mut_get_len(str));
+    } else if constexpr (std::is_same_v<FieldType, char *> ||
+                         std::is_same_v<FieldType, const char *>) {
+        auto *str = yyjson_mut_strcpy(doc, field);
+        yyjson_mut_set_strn(val, yyjson_mut_get_str(str), yyjson_mut_get_len(str));
+    } else if constexpr (std::is_floating_point_v<FieldType>) {
+        if constexpr (std::is_same_v<FieldType, float>)
+            yyjson_mut_set_float(val, float(field));
+        else
+            yyjson_mut_set_double(val, double(field));
+    } else if constexpr (std::is_same_v<FieldType, bool>) {
+        yyjson_mut_set_bool(val, field);
+    } else if constexpr (std::is_integral_v<FieldType>) {
+        if constexpr (std::is_unsigned_v<FieldType>)
+            yyjson_mut_set_uint(val, uint64_t(field));
+        else
+            yyjson_mut_set_int(val, int64_t(field));
+    }
+    // vectors
+    else if constexpr (is_vector_v<FieldType>) {
+        yyjson_mut_set_arr(val);
+        for (const auto &item : field) {
+            auto *elem = yyjson_mut_null(doc);
+            yyjson_mut_arr_append(val, elem);
+            writeValue(doc, elem, item);
+        }
+    }
+    // optionals
+    else if constexpr (is_optional_v<FieldType>) {
+        if (field.has_value())
+            writeValue(doc, val, *field);
+        else
+            yyjson_mut_set_null(val);
+    }
+    // maps
+    else if constexpr (is_map_v<FieldType>) {
+        yyjson_mut_set_obj(val);
+        for (const auto &[k, v] : field) {
+            auto *sub = yyjson_mut_null(doc);
+            auto *key = yyjson_mut_strncpy(doc, k.data(), k.size());
+            yyjson_mut_obj_put(val, key, sub);
+            writeValue(doc, sub, v);
+        }
+    }
+    // to_json ADL
+    else if constexpr (requires { to_json(jacinth::mutable_value{nullptr, nullptr}, field); }) {
+        to_json(jacinth::mutable_value{doc, val}, field);
+    }
+    // nested structs, etc
+    else if constexpr (std::is_aggregate_v<FieldType>) {
+        yyjson_mut_set_obj(val);
+#ifdef JACINTH_USE_REFLECTION
+        template for (constexpr auto f :
+                      std::define_static_array(std::meta::nonstatic_data_members_of(
+                          ^^T, std::meta::access_context::current())))
+        {
+            constexpr auto name = std::meta::identifier_of(f);
+            auto *sub = yyjson_mut_null(doc);
+            yyjson_mut_obj_add_val(doc, val, name.data(), sub);
+            writeValue(doc, sub, field.[:f:]);
+        }
+#else
+        boost::pfr::for_each_field_with_name(field, [&](std::string_view name, auto &sub_field) {
+            auto *sub = yyjson_mut_null(doc);
+            yyjson_mut_obj_add_val(doc, val, name.data(), sub);
+            writeValue(doc, sub, sub_field);
+        });
+#endif
+    } else {
+        static_assert(always_false<FieldType>, "jacinth: unsupported type for JSON serialization");
+    }
+}

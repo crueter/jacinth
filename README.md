@@ -22,7 +22,6 @@ Nice to haves that are not guaranteed, but may be added in the future:
 - JS-like append/remove API, and other operator overload sauce
 - C++20 `std::format` specializations for JSON objects
 - Deep, robust error handling
-- Custom to/from_json methods like nlohmann
 
 ## Currently Implemented
 
@@ -33,3 +32,4 @@ This library is super WIP so don't expect much of anything for now.
 - Partially-implemented in-place JSON/doc API (`jacinth::json`, `jacinth::doc`)
   - This is intended to be relatively drop-in to nlohmann
 - C++20 Module support
+- nlohmann-like ADL `to_json` and `from_json`
