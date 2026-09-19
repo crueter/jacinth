@@ -157,6 +157,10 @@ public:
 
     explicit doc(yyjson_doc *d) noexcept : m_doc(d) {}
 
+    yyjson_doc *raw() const {
+        return m_doc;
+    }
+
     // interpret the root as type T
     template <typename T>
     operator T() const
@@ -379,7 +383,7 @@ public:
         yyjson_mut_doc_set_root(m_doc, yyjson_mut_null(m_doc));
     }
 
-    explicit json(doc const &d) : json(yyjson_doc_mut_copy(d, nullptr)) {}
+    explicit json(doc const &d) : json(yyjson_doc_mut_copy(d.raw(), nullptr)) {}
 
     template <typename T>
     json(const T &v) : json()
@@ -440,7 +444,7 @@ public:
     // non-allocating dump
     void dump_to(std::string &s, write_opts opts = {})
     {
-        auto *root = yyjson_mut_doc_get_root(m_doc);
+        auto *root = m_doc->root;
         std::size_t len = 0;
         char *buf = root ? yyjson_mut_val_write(root, opts.to_flags(), &len) : nullptr;
         s.assign(buf ? buf : "", buf ? len : 0);
