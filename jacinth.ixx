@@ -952,13 +952,19 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
         {
             constexpr auto name = std::meta::identifier_of(f);
             auto *sub = yyjson_mut_null(doc);
-            yyjson_mut_obj_add_val(doc, val, name.data(), sub);
+            auto *key = yyjson_mut_strn(doc, name.data(), name.size());
+            if (unsafe_yyjson_is_str_noesc(name.data(), name.size()))
+                unsafe_yyjson_set_tag(key, YYJSON_TYPE_STR, YYJSON_SUBTYPE_NOESC, name.size());
+            yyjson_mut_obj_add(val, key, sub);
             writeValue(doc, sub, field.[:f:]);
         }
 #else
         boost::pfr::for_each_field_with_name(field, [&](std::string_view name, auto &sub_field) {
             auto *sub = yyjson_mut_null(doc);
-            yyjson_mut_obj_add_val(doc, val, name.data(), sub);
+            auto *key = yyjson_mut_strn(doc, name.data(), name.size());
+            if (unsafe_yyjson_is_str_noesc(name.data(), name.size()))
+                unsafe_yyjson_set_tag(key, YYJSON_TYPE_STR, YYJSON_SUBTYPE_NOESC, name.size());
+            yyjson_mut_obj_add(val, key, sub);
             writeValue(doc, sub, sub_field);
         });
 #endif
