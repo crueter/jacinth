@@ -782,6 +782,15 @@ void parseValue(yyjson_val *val, T &field)
         else if (yyjson_is_int(val))
             field = FieldType(yyjson_get_int(val));
     }
+    // enums are serialized as their underlying type
+    else if constexpr (std::is_enum_v<FieldType>) {
+        using UnderlyingType = std::underlying_type_t<FieldType>;
+        using WideType = std::make_unsigned_t<UnderlyingType>;
+        if (yyjson_is_uint(val))
+            field = static_cast<FieldType>(WideType(yyjson_get_uint(val)));
+        else if (yyjson_is_int(val))
+            field = static_cast<FieldType>(WideType(static_cast<WideType>(yyjson_get_int(val))));
+    }
     // vectors
     else if constexpr (is_vector_v<FieldType>) {
         if (yyjson_is_arr(val)) {
@@ -885,6 +894,14 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
             yyjson_mut_set_uint(val, uint64_t(field));
         else
             yyjson_mut_set_int(val, int64_t(field));
+    }
+    // enums are serialized as their underlying type
+    else if constexpr (std::is_enum_v<FieldType>) {
+        using UnderlyingType = std::underlying_type_t<FieldType>;
+        if constexpr (std::is_unsigned_v<UnderlyingType>)
+            yyjson_mut_set_uint(val, uint64_t(static_cast<UnderlyingType>(field)));
+        else
+            yyjson_mut_set_int(val, int64_t(static_cast<UnderlyingType>(field)));
     }
     // vectors
     else if constexpr (is_vector_v<FieldType>) {

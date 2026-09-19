@@ -8,6 +8,7 @@
 
 import jacinth;
 
+// TODO: make an actual unit testing suite
 struct Asset {
     std::string name;
     std::size_t size;
@@ -37,6 +38,24 @@ struct MapStruct {
     std::map<std::string, uint32_t> values;
 };
 
+enum Condition {
+    New,
+    LikeNew,
+    Great,
+    WellLoved,
+    Used,
+    Okay,
+    Bad,
+    Wrecked,
+};
+
+struct Car {
+    std::string make;
+    std::string model;
+    std::size_t year;
+    Condition condition;
+};
+
 namespace {
 
 struct CustomStruct {
@@ -53,12 +72,16 @@ void from_json(const jacinth::value &json, CustomStruct &custom) {
 
 }
 
-int main()
-{
-    std::ifstream file("release.json");
+std::string readAll(const std::string &filename) {
+    std::ifstream file(filename);
     std::stringstream buf;
     buf << file.rdbuf();
-    auto data = buf.str();
+    return buf.str();
+}
+
+int main()
+{
+    auto data = readAll("release.json");
 
     // Struct reflection
     {
@@ -193,5 +216,17 @@ int main()
         std::println("std::array struct: {}", jacinth::json::dump(s));
     }
 
-    // TODO: test doc, struct write
+    // enum
+    {
+        auto cars_json = readAll("cars.json");
+
+        std::vector<Car> cars = jacinth::json::read(cars_json);
+
+        std::size_t i = 0;
+        for (const auto &car : cars) {
+            std::println("Car {}: {} {} {}", i, car.year, car.make, car.model);
+            std::println("  Condition: {}", int(car.condition));
+            ++i;
+        }
+    }
 }

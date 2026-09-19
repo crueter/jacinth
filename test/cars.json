@@ -1,0 +1,26 @@
+[
+  {
+    "year": 2006,
+    "make": "Acura",
+    "model": "MDX",
+    "condition": 1
+  },
+  {
+    "year": 1993,
+    "make": "Chevrolet",
+    "model": "Suburban",
+    "condition": 6
+  },
+  {
+    "year": 2026,
+    "make": "Ford",
+    "model": "F-150 Raptor",
+    "condition": 0
+  },
+  {
+    "year": 2015,
+    "make": "Toyota",
+    "model": "Corolla",
+    "condition": 4
+  }
+]
