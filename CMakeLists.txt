@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.31)
 
-project(jacinth LANGUAGES C CXX)
+project(jacinth VERSION 0.1.0 LANGUAGES C CXX)
 
 include(CMakeDependentOption)
 
@@ -27,19 +27,18 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# reflection
-# TODO: MSVC
+# TODO: better control flow
 if (JACINTH_USE_REFLECTION)
     set(CMAKE_CXX_STANDARD 26)
-    add_compile_definitions(JACINTH_USE_REFLECTION)
-    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-freflection>)
 else()
     # pfr
     if(JACINTH_USE_SYSTEM_PFR)
-        find_package(Boost COMPONENTS pfr REQUIRED)
+        find_package(Boost REQUIRED COMPONENTS headers)
     endif()
 
-    if (NOT TARGET Boost::pfr)
+    if (TARGET Boost::headers AND NOT TARGET Boost::pfr)
+        add_library(Boost::pfr ALIAS Boost::headers)
+    elseif (NOT TARGET Boost::pfr)
         add_library(boost_pfr INTERFACE)
         target_include_directories(boost_pfr INTERFACE pfr/include)
         add_library(Boost::pfr ALIAS boost_pfr)
@@ -56,7 +55,19 @@ else()
 endif()
 
 # jacinth module target
+if (BUILD_SHARED_LIBS)
+    set(lib_type SHARED)
+else()
+    set(lib_type STATIC)
+endif()
+
 add_library(jacinth)
+
+if (JACINTH_USE_REFLECTION)
+    set_source_files_properties(jacinth.ixx PROPERTIES
+        COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:CXX>:-freflection>"
+        COMPILE_DEFINITIONS "JACINTH_USE_REFLECTION")
+endif()
 
 target_sources(jacinth PUBLIC
     FILE_SET jacinth TYPE CXX_MODULES FILES jacinth.ixx)
@@ -77,9 +88,25 @@ if (JACINTH_INSTALL)
         FILE_SET jacinth DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jacinth)
 
     install(EXPORT jacinth-targets
-        FILE jacinthConfig.cmake
+        FILE jacinthTargets.cmake
         NAMESPACE jacinth::
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/jacinth")
+
+    include(CMakePackageConfigHelpers)
+    configure_package_config_file(
+        "${CMAKE_SOURCE_DIR}/cmake/jacinthConfig.cmake.in"
+        "${CMAKE_BINARY_DIR}/jacinthConfig.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/jacinth)
+
+    write_basic_package_version_file(
+        "${CMAKE_BINARY_DIR}/jacinthConfigVersion.cmake"
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY SameMajorVersion)
+
+    install(FILES
+        "${CMAKE_BINARY_DIR}/jacinthConfigVersion.cmake"
+        "${CMAKE_BINARY_DIR}/jacinthConfig.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/jacinth)
 endif()
 
 if (JACINTH_BUILD_TESTS)

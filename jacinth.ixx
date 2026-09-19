@@ -6,6 +6,8 @@ module;
 #include <utility>
 #include <vector>
 
+// force yyjson to have external linkage
+#define yyjson_api_inline yyjson_inline
 #include "yyjson.h"
 
 #ifdef JACINTH_USE_REFLECTION
