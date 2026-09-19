@@ -1,6 +1,7 @@
 module;
 
 #include <cstdint>
+#include <cstring>
 #include <map>
 #include <optional>
 #include <utility>
@@ -772,6 +773,9 @@ void parseValue(yyjson_val *val, T &field)
     if constexpr (std::is_same_v<FieldType, std::string>) {
         if (yyjson_is_str(val))
             field.assign(yyjson_get_str(val), yyjson_get_len(val));
+    } else if constexpr (std::is_same_v<FieldType, std::string_view>) {
+        if (yyjson_is_str(val))
+            field = {yyjson_get_str(val), yyjson_get_len(val)};
     } else if constexpr (std::is_floating_point_v<FieldType>) {
         if (yyjson_is_num(val))
             field = FieldType(yyjson_get_num(val));
@@ -796,17 +800,13 @@ void parseValue(yyjson_val *val, T &field)
     // vectors
     else if constexpr (is_vector_v<FieldType>) {
         if (yyjson_is_arr(val)) {
-            using ElemType = typename FieldType::value_type;
-            field.clear();
-            field.reserve(yyjson_arr_size(val));
+            field.resize(yyjson_arr_size(val));
 
             size_t idx, max;
             yyjson_val *elem;
             yyjson_arr_foreach(val, idx, max, elem)
             {
-                ElemType item{};
-                parseValue(elem, item);
-                field.push_back(std::move(item));
+                parseValue(elem, field[idx]);
             }
         }
     }
@@ -844,16 +844,21 @@ void parseValue(yyjson_val *val, T &field)
     }
     // nested structs, etc.
     else if constexpr (std::is_aggregate_v<FieldType>) {
-        if (yyjson_is_obj(val))
+        if (yyjson_is_obj(val)) {
 #ifdef JACINTH_USE_REFLECTION
-            template for (constexpr auto f :
-                          std::define_static_array(std::meta::nonstatic_data_members_of(
-                              ^^T, std::meta::access_context::current())))
-            {
-                constexpr auto name = std::meta::identifier_of(f);
-                yyjson_val *sub = yyjson_obj_getn(val, name.data(), name.size());
-                if (sub) {
-                    parseValue(sub, field.[:f:]);
+            yyjson_obj_iter iter;
+            yyjson_obj_iter_init(val, &iter);
+            yyjson_val *key;
+            while ((key = yyjson_obj_iter_next(&iter))) {
+                template for (constexpr auto f :
+                            std::define_static_array(std::meta::nonstatic_data_members_of(
+                                ^^T, std::meta::access_context::current())))
+                {
+                    constexpr auto name = std::meta::identifier_of(f);
+                    if (yyjson_get_len(key) == name.size() && std::memcmp(yyjson_get_str(key), name.data(), name.size()) == 0) {
+                        parseValue(yyjson_obj_iter_get_val(key), field.[:f:]);
+                        break;
+                    }
                 }
             }
 
@@ -864,6 +869,7 @@ void parseValue(yyjson_val *val, T &field)
                     parseValue(sub, sub_field);
                 });
 #endif
+            }
     }
 }
 
@@ -876,14 +882,15 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
 
     using FieldType = std::decay_t<T>;
 
+    // TODO: is non-copied safe?
     if constexpr (std::is_same_v<FieldType, std::string> ||
                   std::is_same_v<FieldType, std::string_view>) {
-        auto *str = yyjson_mut_strncpy(doc, field.data(), field.size());
-        yyjson_mut_set_strn(val, yyjson_mut_get_str(str), yyjson_mut_get_len(str));
+        // auto *str = yyjson_mut_strncpy(doc, field.data(), field.size());
+        yyjson_mut_set_strn(val, field.data(), field.size());
     } else if constexpr (std::is_same_v<FieldType, char *> ||
                          std::is_same_v<FieldType, const char *>) {
-        auto *str = yyjson_mut_strcpy(doc, field);
-        yyjson_mut_set_strn(val, yyjson_mut_get_str(str), yyjson_mut_get_len(str));
+        // auto *str = yyjson_mut_strcpy(doc, field);
+        yyjson_mut_set_strn(val, field, strlen(field));
     } else if constexpr (std::is_floating_point_v<FieldType>) {
         if constexpr (std::is_same_v<FieldType, float>)
             yyjson_mut_set_float(val, float(field));

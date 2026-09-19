@@ -19,6 +19,7 @@ if (JACINTH_USE_REFLECTION AND NOT PROJECT_IS_TOP_LEVEL)
     target_compile_definitions(test PRIVATE JACINTH_USE_REFLECTION)
     target_compile_options(test PRIVATE
         $<$<COMPILE_LANGUAGE:CXX>:-freflection>)
+    target_compile_features(test PRIVATE cxx_std_26)
 endif()
 
 target_link_libraries(test PRIVATE jacinth::jacinth)
