@@ -5,8 +5,8 @@
 #include <utility>
 #include <vector>
 
-#include <sstream>
 #include <map>
+#include <sstream>
 
 import jacinth;
 
@@ -30,7 +30,7 @@ struct Release {
     std::vector<Asset> assets;
 };
 
-struct ArrayStruct{
+struct ArrayStruct {
     std::string label;
     std::array<float, 4> values;
 };
@@ -67,23 +67,27 @@ struct Car {
     Condition condition;
 };
 
-namespace {
+namespace
+{
 
 struct CustomStruct {
     std::string name;
 };
 
-void to_json(jacinth::mutable_value json, const CustomStruct &custom) {
+void to_json(jacinth::mutable_value json, const CustomStruct &custom)
+{
     json["derived"] = std::format("Derived value from to_json: {}", custom.name);
 }
 
-void from_json(const jacinth::value &json, CustomStruct &custom) {
+void from_json(const jacinth::value &json, CustomStruct &custom)
+{
     custom.name = std::format("Derived value from from_json: {}", json["name"].as<std::string>());
 }
 
-}
+} // namespace
 
-std::string readAll(const std::string &filename) {
+std::string readAll(const std::string &filename)
+{
     std::ifstream file(filename);
     std::stringstream buf;
     buf << file.rdbuf();
@@ -134,25 +138,19 @@ int main()
         }
     }
 
-    std::vector<Asset> newAssets = {Asset{
-        .name = "Test-Asset.tar.gz",
-        .size = 6791230,
-        .digest = "sha256:abcdef1234567890",
-        .created_at = "tomorrow",
-        .browser_download_url = "https://example.com",
-        .node_id = "node123256789abcdef"
-    }};
+    std::vector<Asset> newAssets = {Asset{.name = "Test-Asset.tar.gz",
+                                          .size = 6791230,
+                                          .digest = "sha256:abcdef1234567890",
+                                          .created_at = "tomorrow",
+                                          .browser_download_url = "https://example.com",
+                                          .node_id = "node123256789abcdef"}};
 
     // Create a JSON from scratch
     {
         auto json = jacinth::json();
         json["name"] = "Jacinth";
         json["creator"] = "crueter";
-        json["features"] = {
-            "Modules",
-            "Reflection",
-            "OOP API"
-        };
+        json["features"] = {"Modules", "Reflection", "OOP API"};
 
         auto dumped = json.dump();
         std::println("Dumped: {}", dumped);
@@ -192,14 +190,7 @@ int main()
 
     // Maps
     {
-        MapStruct s = {
-            "John",
-            {
-                {"James", 23},
-                {"Kayla", 76},
-                {"Thomas", 51}
-            }
-        };
+        MapStruct s = {"John", {{"James", 23}, {"Kayla", 76}, {"Thomas", 51}}};
 
         std::println("MapStruct:");
         std::string str;
@@ -207,20 +198,14 @@ int main()
         std::println("{}", str);
 
         // direct map serialization
-        std::map<std::string, int> people = {
-            {"James", 23},
-            {"Kayla", 76},
-            {"Thomas", 51}
-        };
+        std::map<std::string, int> people = {{"James", 23}, {"Kayla", 76}, {"Thomas", 51}};
 
         std::println("direct map serialization: {}", jacinth::json::dump(people));
     }
 
     // Custom to/from json
     {
-        CustomStruct s = {
-            "CustomStruct Test"
-        };
+        CustomStruct s = {"CustomStruct Test"};
 
         const auto json_str = "{\"name\": \"CustomStruct JSON\"}";
 
@@ -231,20 +216,15 @@ int main()
 
     // test std::array
     {
-        ArrayStruct s = {
-            "ArrayStruct",
-            {
-                10.5, 6.7, 988.43, -10000000000
-            }
-        };
+        ArrayStruct s = {"ArrayStruct", {10.5, 6.7, 988.43, -10000000000}};
 
         const auto dumped = jacinth::json::dump(s);
         std::println("std::array: {}", dumped);
 
         ArrayStruct back = jacinth::json::read(dumped);
         std::println("  label: {}", back.label);
-        std::println("  values: {} {} {} {}",
-                     back.values[0], back.values[1], back.values[2], back.values[3]);
+        std::println("  values: {} {} {} {}", back.values[0], back.values[1], back.values[2],
+                     back.values[3]);
     }
 
     // test std::span
@@ -281,11 +261,7 @@ int main()
         jacinth::json json;
         json["name"] = "Jacinth";
         json["creator"] = "crueter";
-        json["features"] = {
-            "Modules",
-            "Reflection",
-            "OOP API"
-        };
+        json["features"] = {"Modules", "Reflection", "OOP API"};
 
         std::println("Jacinth: {}", json.dump());
     }
@@ -298,26 +274,13 @@ int main()
 
     // directly dump a vector
     {
-        std::vector<float> vec = {
-            100.3,
-            678.25,
-            892349237.23,
-            -198123424,
-            -0
-        };
+        std::vector<float> vec = {100.3, 678.25, 892349237.23, -198123424, -0};
 
         std::println("direct vector dump: {}", jacinth::json::dump(vec));
     }
 
     {
-        std::vector<std::string> vec = {
-            "Hello",
-            "Hi",
-            "Hey",
-            "Heyo",
-            "Hola",
-            "Bonjour"
-        };
+        std::vector<std::string> vec = {"Hello", "Hi", "Hey", "Heyo", "Hola", "Bonjour"};
 
         std::println("direct string vector dump: {}", jacinth::json::dump(vec));
     }

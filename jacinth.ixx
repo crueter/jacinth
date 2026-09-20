@@ -186,11 +186,12 @@ public:
     doc &operator=(doc const &) = delete;
     doc &operator=(doc &&o) noexcept
     {
-        std::swap(static_cast<value&>(*this), static_cast<value&>(o));
+        std::swap(static_cast<value &>(*this), static_cast<value &>(o));
         return *this;
     }
 
-    yyjson_doc *raw() const {
+    yyjson_doc *raw() const
+    {
         return m_doc;
     }
 
@@ -477,8 +478,7 @@ public:
         return s;
     }
 
-    static void dump_to(const mutable_value &value, std::string &s,
-                        write_opts opts = {})
+    static void dump_to(const mutable_value &value, std::string &s, write_opts opts = {})
     {
         value.dump_to(s, opts);
     }
@@ -491,8 +491,7 @@ public:
         return s;
     }
 
-    static void dump_to(const doc &value, std::string &s,
-                        write_opts opts = {})
+    static void dump_to(const doc &value, std::string &s, write_opts opts = {})
     {
         value.dump_to(s, opts);
     }
@@ -505,8 +504,7 @@ public:
         return s;
     }
 
-    static void dump_to(const value &node, std::string &s,
-                        write_opts opts = {})
+    static void dump_to(const value &node, std::string &s, write_opts opts = {})
     {
         node.dump_to(s, opts);
     }
@@ -855,11 +853,12 @@ void parseValue(yyjson_val *val, T &field)
             yyjson_val *key;
             while ((key = yyjson_obj_iter_next(&iter))) {
                 template for (constexpr auto f :
-                            std::define_static_array(std::meta::nonstatic_data_members_of(
-                                ^^T, std::meta::access_context::current())))
+                              std::define_static_array(std::meta::nonstatic_data_members_of(
+                                  ^^T, std::meta::access_context::current())))
                 {
                     constexpr auto name = std::meta::identifier_of(f);
-                    if (yyjson_get_len(key) == name.size() && std::memcmp(yyjson_get_str(key), name.data(), name.size()) == 0) {
+                    if (yyjson_get_len(key) == name.size() &&
+                        std::memcmp(yyjson_get_str(key), name.data(), name.size()) == 0) {
                         parseValue(yyjson_obj_iter_get_val(key), field.[:f:]);
                         break;
                     }
@@ -873,7 +872,7 @@ void parseValue(yyjson_val *val, T &field)
                     parseValue(sub, sub_field);
                 });
 #endif
-            }
+        }
     }
 }
 
