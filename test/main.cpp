@@ -1,12 +1,15 @@
 #include <array>
+#include <expected>
 #include <fstream>
 #include <print>
 #include <span>
+#include <system_error>
 #include <utility>
 #include <vector>
 
 #include <map>
 #include <sstream>
+#include <string_view>
 
 import jacinth;
 
@@ -92,6 +95,34 @@ std::string readAll(const std::string &filename)
     std::stringstream buf;
     buf << file.rdbuf();
     return buf.str();
+}
+
+int failures = 0;
+
+void expect(bool cond, std::string_view what)
+{
+    if (!cond) {
+        std::println("FAIL: {}", what);
+        ++failures;
+    }
+}
+
+template <typename T>
+void expect_errc(const std::expected<T, std::error_code> &res, jacinth::errc want,
+                 std::string_view what)
+{
+    if (res) {
+        std::println("FAIL: {} (expected error {}, got value)", what, int(want));
+        ++failures;
+        return;
+    }
+    if (res.error().value() != int(want)) {
+        std::println("FAIL: {} (error code {}, message \"{}\")", what, res.error().value(),
+                     res.error().message());
+        ++failures;
+    } else {
+        std::println("PASS: {} (got \"{}\")", what, res.error().message());
+    }
 }
 
 int main()
@@ -295,4 +326,120 @@ int main()
         }
         std::println("after:  a.y={}", a["y"].as<int>());
     }
+
+    // create a nested json array
+    {
+        jacinth::json json;
+        json["hello"]["nested"][3] = 15.0;
+
+        std::println("{}", json.dump());
+    }
+
+    // This is AI slop because I cba to write 6000 unit tests on random nonsense, enjoy
+
+    // opt-in error handling
+    {
+        // whole-document parse failures
+        expect_errc(jacinth::doc::try_read("not json {"), jacinth::errc::invalid_json,
+                    "doc::try_read invalid text");
+        expect_errc(jacinth::json::try_read("not json {"), jacinth::errc::invalid_json,
+                    "json::try_read invalid text");
+        expect_errc(jacinth::doc::try_read(""), jacinth::errc::invalid_json,
+                    "doc::try_read empty text");
+
+        // typed read: release.json has no Car keys
+        expect_errc(jacinth::doc::try_read<Car>(data), jacinth::errc::missing_value,
+                    "doc::try_read<Car> from release.json");
+        expect_errc(jacinth::json::try_read<Car>(data), jacinth::errc::missing_value,
+                    "json::try_read<Car> from release.json");
+
+        // nested required field missing
+        expect_errc(jacinth::doc::try_read<Asset>(R"({"name":"x"})"), jacinth::errc::missing_value,
+                    "doc::try_read<Asset> missing fields");
+
+        // wrong root type for an aggregate
+        expect_errc(jacinth::doc::try_read<Car>("[]"), jacinth::errc::type_mismatch,
+                    "doc::try_read<Car> from array");
+        expect_errc(jacinth::doc::try_read<Car>("null"), jacinth::errc::type_mismatch,
+                    "doc::try_read<Car> from null");
+
+        // scalar conversions
+        {
+            auto v = jacinth::doc::read(R"({
+                "s": "hello",
+                "n": 42,
+                "d": 3.5,
+                "b": true,
+                "obj": {"x": 1},
+                "arr": [1, 2],
+                "badarr": [1, "two"],
+                "nil": null,
+                "opt_good": 7,
+                "opt_null": null
+            })");
+
+            expect_errc(v["nil"].try_as<std::string>(), jacinth::errc::type_mismatch,
+                        "null as string");
+            expect_errc(v["s"].try_as<int>(), jacinth::errc::type_mismatch, "string as int");
+            expect_errc(v["s"].try_as<double>(), jacinth::errc::type_mismatch, "string as double");
+            expect_errc(v["n"].try_as<std::string>(), jacinth::errc::type_mismatch,
+                        "int as string");
+            expect_errc(v["n"].try_as<bool>(), jacinth::errc::type_mismatch, "int as bool");
+            expect_errc(v["b"].try_as<int>(), jacinth::errc::type_mismatch, "bool as int");
+            expect_errc(v["obj"].try_as<int>(), jacinth::errc::type_mismatch, "object as int");
+            expect_errc(v["arr"].try_as<int>(), jacinth::errc::type_mismatch, "array as int");
+
+            // missing key / out-of-range array index
+            expect_errc(v["missing"].try_as<int>(), jacinth::errc::missing_value,
+                        "missing key as int");
+            expect_errc(v.try_get<int>("missing"), jacinth::errc::missing_value,
+                        "try_get missing key");
+            expect_errc(v["arr"][99].try_as<int>(), jacinth::errc::missing_value,
+                        "array index out of range");
+
+            // container element type errors
+            expect_errc(v["badarr"].try_as<std::vector<int>>(), jacinth::errc::type_mismatch,
+                        "vector<int> from [1, \"two\"]");
+            expect_errc(v["badarr"].try_as<std::array<float, 2>>(), jacinth::errc::type_mismatch,
+                        "array<float,2> from [1, \"two\"]");
+
+            // optionals: present / null / missing all succeed
+            auto opt_good = v["opt_good"].try_as<std::optional<int>>();
+            expect(opt_good.has_value() && opt_good->has_value() && **opt_good == 7,
+                   "optional present value");
+            auto opt_null = v["opt_null"].try_as<std::optional<int>>();
+            expect(opt_null.has_value() && !opt_null->has_value(), "optional null value");
+            auto opt_missing = v["nope"].try_as<std::optional<int>>();
+            expect(opt_missing.has_value() && !opt_missing->has_value(), "optional missing key");
+            expect_errc(v["opt_good"].try_as<std::optional<std::string>>(),
+                        jacinth::errc::type_mismatch, "optional int from string");
+        }
+
+        // map with a bad element type
+        {
+            auto m = jacinth::doc::read(R"({"name":"ok","values":{"a":"boom"}})");
+            expect_errc(m.try_as<MapStruct>(), jacinth::errc::type_mismatch,
+                        "map<string,uint32_t> from bad value");
+        }
+
+        // enum from a string
+        {
+            auto c = jacinth::doc::read(R"({"make":"x","model":"y","year":1,"condition":"New"})");
+            expect_errc(c.try_as<Car>(), jacinth::errc::type_mismatch, "enum from string");
+        }
+
+        // error_code ergonomics: == errc and category exposure
+        auto bad = jacinth::doc::try_read("nope");
+        expect(!bad.has_value() && bad.error() == jacinth::errc::invalid_json,
+               "error_code == errc comparison");
+        expect(std::string(bad.error().category().name()) == "jacinth", "error category name");
+        expect(!bad.error().message().empty(), "error message non-empty");
+        auto missing = jacinth::doc::try_read<Car>(data);
+        expect(missing.error() != jacinth::errc::invalid_json, "error_code != errc comparison");
+        expect(missing.error() == jacinth::errc::missing_value, "missing_value comparison");
+    }
+
+    // [END AI SLOP]
+
+    return failures ? 1 : 0;
 }

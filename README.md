@@ -42,6 +42,10 @@ Jacinth is intentionally designed in a limited manner that makes it as easy to u
   - This might be added at some point
 - `std::format` specializations (for now)
   - For the time being you can just `jacinth::json::dump`
+- An absolutely zero-overhead wrapper around yyjson
+  - Jacinth's safety semantics, error handling, and other goodies generally make this impossible.
+  - However, Jacinth is still plenty fast, usually between 80-90% of yyjson. See [#Performance](#performance).
+  - Generally, parse/read is nearly as fast as yyjson, but writing is usually around 20% slower due to memory safety shenanigans.
 
 ## Performance
 
@@ -53,8 +57,8 @@ In this test, `Jacinth (Parse)` refers to parsing the JSON into DOM and extracti
 | ------- | ------------------ | ------------ | ----------- |
 | [**Glaze**](https://github.com/stephenberry/glaze) | **0.87** | **1425** | **1653** |
 | [**simdjson (on demand)**](https://github.com/simdjson/simdjson) | **N/A** | **N/A** | **1995** |
-| [**yyjson**](https://github.com/ibireme/yyjson) | **1.15** | **1125** | **1429** |
-| [**Jacinth (Struct)**](https://github.com/crueter/jacinth) | **1.42** | **988** | **1293** |
+| [**yyjson**](https://github.com/ibireme/yyjson) | **1.09** | **1247** | **1469** |
+| [**Jacinth (Struct)**](https://github.com/crueter/jacinth) | **1.40** | **988** | **1343** |
 | [**Jacinth (Parse)**](https://github.com/crueter/jacinth) | **N/A** | **N/A** | **2133** |
 | [**reflect_cpp**](https://github.com/getml/reflect-cpp) | **2.35** | **778** | **448** |
 | [**daw_json_link**](https://github.com/beached/daw_json_link) | **2.23** | **526** | **755** |
@@ -172,6 +176,21 @@ json["features"] = {
 std::println("Jacinth: {}", json.dump());
 ```
 
+You can also create arrays from scratch. If you access a currently out-of-bound index, the array will be filled with nulls until it reaches your desired index:
+
+```json
+jacinth::json json;
+json["hello"]["nested"][3] = 15.0;
+
+std::println("{}", json.dump());
+```
+
+Outputs:
+
+```json
+{"hello":{"nested":[null,null,null,15.0]}}
+```
+
 ### On-demand JSON document parsing
 
 Jacinth supports high-speed lazy DOM parsing, which is useful if you only need a few fields in a large JSON document.
@@ -197,7 +216,7 @@ Also note the `as<std::string>()` here. Generally speaking, this is only necessa
 
 ### Pretty-print
 
-You can use `jacinth::write_opts` to pretty print:
+You can use the `jacinth::write_opts` struct to pretty print:
 
 ```cpp
 std::println("{}", jacinth::json::dump(asset, {.pretty = true}));
@@ -281,3 +300,48 @@ features: ["Modules","Reflection","OOP API"]
 ```
 
 Also notice that `dump`/`dump_to` directly support Jacinth's JSON value types. This is useful because it allows you to print any arbitrary JSON value without the need for explicit type conversions (in this example you would have to check conversion to `std::vector`).
+
+### Error Handling
+
+Jacinth allows consumers to opt-in to error handling for invalid JSONs, missing values, mismatched types, etc. The default `read`/`as`/`get` methods will just ignore these errors and give a blank/default-constructed value. This is useful in cases where you know the JSON will be exactly in the schema you expect, and file and I/O errors are already accounted for.
+
+However, you may choose to opt into `std::expected`-based error handling. The primary differences are:
+
+- `read` -> `try_read`
+- `as<T>` -> `try_as<T>`
+- Implicit type conversion from `json["key"]` -> `json["key"].try_as<T>`, or `json.try_get<T>("key")`
+
+Currently, write operations don't have error handling. This is simply due to the sheer amount of overloads this would require. The library internals *do* support this so I'll get to adding it eventually.
+
+These examples use a `auto ... = read<T>` pattern as opposed to previous example's `T ... = read` pattern. `try_` methods are better off using explicit templating, so the compiler can automatically deduce `std::expected<T, std::error_code>` (and so you don't have to type that out each time).
+
+`try_read`:
+
+```cpp
+auto release_data = /* read release.json */;
+auto maybe_car = jacinth::json::try_read<Car>(release_data);
+
+if (maybe_car) {
+    std::println("Got car: {}", jacinth::json::dump(maybe_car.value()));
+} else {
+    std::println("Expected car: {}", maybe_car.error().message());
+}
+```
+
+`try_as`, `try_get`:
+
+```cpp
+auto maybe_release = jacinth::json::try_read(release_data);
+
+if (!maybe_release) {
+    // ...
+} else {
+    auto release = maybe_release.value();
+    auto maybe_name = release["created_at"].try_as<std::string>();
+    // or...
+    auto maybe_name = release.try_get<std::string>("created_at");
+    if (!maybe_name) {
+        std::println("created_at in unexpected format: expected string, got {}", jacinth::json::dump(release["created_at"]));
+    }
+}
+```

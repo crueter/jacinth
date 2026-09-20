@@ -3,9 +3,11 @@ module;
 #include <array>
 #include <cstdint>
 #include <cstring>
+#include <expected>
 #include <map>
 #include <optional>
 #include <span>
+#include <system_error>
 #include <utility>
 #include <vector>
 
@@ -21,13 +23,65 @@ module;
 
 export module jacinth;
 
+export namespace jacinth
+{
+enum class errc {
+    ok,
+    invalid_json,
+    type_mismatch,
+    missing_value,
+    write_error,
+};
+}
+
 template <typename T>
-void parseValue(yyjson_val *val, T &field);
+jacinth::errc parseValue(yyjson_val *val, T &field);
 template <typename T>
-void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field);
+jacinth::errc writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field);
 
 export namespace jacinth
 {
+
+// std::error_code
+namespace detail
+{
+
+class error : public std::error_category {
+    const char *name() const noexcept override
+    {
+        return "jacinth";
+    }
+
+    std::string message(int c) const override
+    {
+        switch (errc(c)) {
+        [[unlikely]] case errc::ok:
+            return "jacinth: OK";
+        case errc::invalid_json:
+            return "jacinth: JSON text failed to parse";
+        case errc::type_mismatch:
+            return "jacinth: type mismatch while parsing value";
+        case errc::missing_value:
+            return "jacinth: required value is missing";
+        case errc::write_error:
+            return "jacinth: JSON write error";
+        }
+        return "jacinth: unknown error";
+    }
+};
+
+inline const std::error_category &jacinth_category() noexcept
+{
+    static const detail::error cat;
+    return cat;
+}
+
+} // namespace detail
+
+inline std::error_code make_error_code(errc e) noexcept
+{
+    return {int(e), detail::jacinth_category()};
+}
 
 // iterator forwarders
 template <typename Iter>
@@ -50,14 +104,14 @@ class mut_object_iterator;
 
 // forwarder for yyjson_write_flag
 struct write_opts {
-    bool pretty;
-    bool escapeUnicode;
-    bool escapeSlashes;
-    bool allowInfAndNan;
-    bool writeInfAndNanAsNull;
-    bool allowInvalidUnicode;
-    bool prettyTwoSpaces;
-    bool endingNewline;
+    bool pretty = false;
+    bool escapeUnicode = false;
+    bool escapeSlashes = false;
+    bool allowInfAndNan = false;
+    bool writeInfAndNanAsNull = false;
+    bool allowInvalidUnicode = false;
+    bool prettyTwoSpaces = false;
+    bool endingNewline = false;
 
     yyjson_write_flag to_flags() const
     {
@@ -110,8 +164,8 @@ public:
     template <typename T>
     operator T() const
     {
-        T t;
-        parseValue(m_val, t);
+        T t{};
+        [[maybe_unused]] auto _ = parseValue(m_val, t);
         return t;
     }
 
@@ -123,6 +177,19 @@ public:
         return t;
     }
 
+    // explicit conv, with error handling
+    template <typename T>
+    std::expected<T, std::error_code> try_as() const
+    {
+        T t{};
+        auto res = parseValue(m_val, t);
+        if (res == jacinth::errc::ok)
+            return t;
+        return std::unexpected(jacinth::make_error_code(res));
+    }
+
+    // TODO: at method?
+
     // Try to get a value, or the default if not
     template <typename T>
     T get(std::string_view key, T default_value = {}) const
@@ -131,6 +198,14 @@ public:
         return v ? T(v) : default_value;
     }
 
+    // Try to get a value, return an error if not
+    template <typename T>
+    std::expected<T, std::error_code> try_get(std::string_view key) const
+    {
+        return operator[](key).try_as<T>();
+    }
+
+    // TODO: byte size? obj size?
     std::size_t size() const
     {
         return yyjson_arr_size(m_val);
@@ -146,6 +221,7 @@ public:
         return yyjson_is_arr(m_val);
     }
 
+    // TODO: try_dump?
     // dump this subtree as a JSON string
     std::string dump(write_opts opts = {}) const
     {
@@ -171,9 +247,31 @@ public:
 // Read-only JSON tree
 class doc : public value {
 public:
-    static doc read(std::string_view s)
+    // TODO: read_opts
+    static doc read(std::string_view s, yyjson_read_flag flg = 0)
     {
-        return doc{yyjson_read(s.data(), s.size(), 0)};
+        return doc{yyjson_read(s.data(), s.size(), flg)};
+    }
+
+    // read, with error handling
+    static std::expected<doc, std::error_code> try_read(std::string_view s,
+                                                        yyjson_read_flag flg = 0)
+    {
+        yyjson_read_err err;
+        yyjson_doc *d = yyjson_read_opts(const_cast<char *>(s.data()), s.size(), flg, NULL, &err);
+        if (!d)
+            return std::unexpected(jacinth::make_error_code(jacinth::errc::invalid_json));
+        return doc(d);
+    }
+
+    // try reading directly to parseable type
+    template <typename T>
+    static std::expected<T, std::error_code> try_read(std::string_view s, yyjson_read_flag flg = 0)
+    {
+        auto d = try_read(s, flg);
+        if (!d)
+            return std::unexpected(d.error());
+        return d.value().template try_as<T>();
     }
 
     explicit doc(yyjson_doc *d) noexcept : value(d, d ? d->root : nullptr) {}
@@ -235,7 +333,7 @@ public:
     template <typename T>
     mutable_value &operator=(const T &v)
     {
-        writeValue(m_doc, m_val, v);
+        [[maybe_unused]] auto _ = writeValue(m_doc, m_val, v);
         return *this;
     }
 
@@ -247,7 +345,8 @@ public:
         for (const auto &item : values) {
             auto *elem = yyjson_mut_null(m_doc);
             yyjson_mut_arr_append(m_val, elem);
-            writeValue(m_doc, elem, item);
+            if (writeValue(m_doc, elem, item) != jacinth::errc::ok)
+                break;
         }
         return *this;
     }
@@ -261,10 +360,11 @@ public:
     template <typename T>
     operator T() const
     {
-        T t;
+        T t{};
         // parseValue can't take mutable values...
         auto *idoc = yyjson_mut_val_imut_copy(m_val, nullptr);
-        parseValue(idoc->root, t);
+        [[maybe_unused]] auto _ = parseValue(idoc->root, t);
+        yyjson_doc_free(idoc);
         return t;
     }
 
@@ -274,6 +374,40 @@ public:
     {
         T t = operator T();
         return t;
+    }
+
+    // explicit conv, with error handling
+    template <typename T>
+    std::expected<T, std::error_code> try_as() const
+    {
+        if (!m_val)
+            return std::unexpected(jacinth::make_error_code(jacinth::errc::missing_value));
+
+        T t{};
+        auto *idoc = yyjson_mut_val_imut_copy(m_val, nullptr);
+        auto res = parseValue(idoc->root, t);
+        yyjson_doc_free(idoc);
+        if (res == jacinth::errc::ok)
+            return t;
+
+        return std::unexpected(jacinth::make_error_code(res));
+    }
+
+    // TODO: at method?
+
+    // Try to get a value, or the default if not
+    template <typename T>
+    T get(std::string_view key, T default_value = {})
+    {
+        value v = operator[](key);
+        return v ? T(v) : default_value;
+    }
+
+    // Try to get a value, return an error if not
+    template <typename T>
+    std::expected<T, std::error_code> try_get(std::string_view key)
+    {
+        return operator[](key).try_as<T>();
     }
 
     // TODO: append/prepend/insert, set?
@@ -344,11 +478,12 @@ public:
 
         // fill the array with zeroes until it's big enough
         // technically this is an anti-pattern
-        while (!v && n <= i) {
-            v = yyjson_mut_null(m_doc);
-            yyjson_mut_arr_append(m_val, v);
-            ++n;
-        }
+        if (!v)
+            while (n <= i) {
+                v = yyjson_mut_null(m_doc);
+                yyjson_mut_arr_append(m_val, v);
+                ++n;
+            }
 
         return {m_doc, v};
     }
@@ -445,6 +580,8 @@ public:
     using base::dump;
     using base::dump_to;
 
+    // TODO: non-alloc methods
+
     // i/o
     static json read(std::string_view s, yyjson_read_flag flg = 0)
     {
@@ -452,6 +589,31 @@ public:
         yyjson_mut_doc *m = yyjson_doc_mut_copy(d, nullptr);
         yyjson_doc_free(d);
         return json(m);
+    }
+
+    // read, with error handling
+    static std::expected<json, std::error_code> try_read(std::string_view s,
+                                                         yyjson_read_flag flg = 0)
+    {
+        yyjson_read_err err;
+        yyjson_doc *d = yyjson_read_opts(const_cast<char *>(s.data()), s.size(), flg, NULL, &err);
+        if (!d)
+            return std::unexpected(jacinth::make_error_code(jacinth::errc::invalid_json));
+
+        yyjson_mut_doc *m = yyjson_doc_mut_copy(d, nullptr);
+        yyjson_doc_free(d);
+        return json(m);
+    }
+
+    // try reading directly to parseable type
+    template <typename T>
+    static std::expected<T, std::error_code> try_read(std::string_view s, yyjson_read_flag flg = 0)
+    {
+        auto d = try_read(s, flg);
+        if (!d)
+            return std::unexpected(d.error());
+
+        return d.value().template try_as<T>();
     }
 
     // Write directly from an object (non-allocating)
@@ -675,6 +837,9 @@ inline iterable_view<mut_array_iterator> mutable_value::as_array()
 
 } // namespace jacinth
 
+template <>
+struct std::is_error_code_enum<jacinth::errc> : std::true_type {};
+
 // vector specializations
 // TODO: generalize this onto all vector/array-likes
 template <typename T>
@@ -732,30 +897,49 @@ inline constexpr bool always_false = false;
 
 // impls
 template <typename T>
-void parseValue(yyjson_val *val, T &field)
+[[nodiscard]] jacinth::errc parseValue(yyjson_val *val, T &field)
 {
-    if (!val)
-        return;
-
     using FieldType = std::decay_t<T>;
 
+    // optionals
+    if constexpr (is_optional_v<FieldType>) {
+        if (val && !yyjson_is_null(val)) {
+            typename FieldType::value_type item;
+            auto res = parseValue(val, item);
+            field = std::move(item);
+            return res;
+        } else
+            field.reset();
+
+        return {};
+    }
+
+    if (!val)
+        return jacinth::errc::missing_value;
+
     if constexpr (std::is_same_v<FieldType, std::string>) {
-        if (yyjson_is_str(val))
-            field.assign(yyjson_get_str(val), yyjson_get_len(val));
+        if (!yyjson_is_str(val))
+            return jacinth::errc::type_mismatch;
+        field.assign(yyjson_get_str(val), yyjson_get_len(val));
     } else if constexpr (std::is_same_v<FieldType, std::string_view>) {
-        if (yyjson_is_str(val))
-            field = {yyjson_get_str(val), yyjson_get_len(val)};
+        if (!yyjson_is_str(val))
+            return jacinth::errc::type_mismatch;
+        field = {yyjson_get_str(val), yyjson_get_len(val)};
     } else if constexpr (std::is_floating_point_v<FieldType>) {
-        if (yyjson_is_num(val))
-            field = FieldType(yyjson_get_num(val));
+        if (!yyjson_is_num(val))
+            return jacinth::errc::type_mismatch;
+        field = FieldType(yyjson_get_num(val));
     } else if constexpr (std::is_same_v<FieldType, bool>) {
-        if (yyjson_is_bool(val))
-            field = yyjson_get_bool(val);
+        if (!yyjson_is_bool(val))
+            return jacinth::errc::type_mismatch;
+        field = yyjson_get_bool(val);
     } else if constexpr (std::is_integral_v<FieldType>) {
         if (yyjson_is_uint(val))
             field = FieldType(yyjson_get_uint(val));
         else if (yyjson_is_int(val))
             field = FieldType(yyjson_get_int(val));
+        else
+            return jacinth::errc::type_mismatch;
     }
     // enums are serialized as their underlying type
     else if constexpr (std::is_enum_v<FieldType>) {
@@ -765,33 +949,37 @@ void parseValue(yyjson_val *val, T &field)
             field = static_cast<FieldType>(WideType(yyjson_get_uint(val)));
         else if (yyjson_is_int(val))
             field = static_cast<FieldType>(WideType(static_cast<WideType>(yyjson_get_int(val))));
+        else
+            return jacinth::errc::type_mismatch;
     }
     // vectors
     else if constexpr (is_vector_v<FieldType>) {
-        if (yyjson_is_arr(val)) {
-            field.resize(yyjson_arr_size(val));
+        if (!yyjson_is_arr(val))
+            return jacinth::errc::type_mismatch;
+        field.resize(yyjson_arr_size(val));
 
-            size_t idx, max;
-            yyjson_val *elem;
-            yyjson_arr_foreach(val, idx, max, elem)
-            {
-                parseValue(elem, field[idx]);
-            }
+        size_t idx, max;
+        yyjson_val *elem;
+        yyjson_arr_foreach(val, idx, max, elem)
+        {
+            if (auto res = parseValue(elem, field[idx]); res != jacinth::errc::ok)
+                return res;
         }
     }
     // fixed-size std::array
     else if constexpr (is_array_v<FieldType>) {
-        if (yyjson_is_arr(val)) {
-            static constexpr const size_t N = std::tuple_size_v<FieldType>;
+        if (!yyjson_is_arr(val))
+            return jacinth::errc::type_mismatch;
+        static constexpr const size_t N = std::tuple_size_v<FieldType>;
 
-            size_t idx, max;
-            yyjson_val *elem;
-            yyjson_arr_foreach(val, idx, max, elem)
-            {
-                if (idx >= N)
-                    break;
-                parseValue(elem, field[idx]);
-            }
+        size_t idx, max;
+        yyjson_val *elem;
+        yyjson_arr_foreach(val, idx, max, elem)
+        {
+            if (idx >= N)
+                break;
+            if (auto res = parseValue(elem, field[idx]); res != jacinth::errc::ok)
+                return res;
         }
     }
     // static-extent std::span
@@ -799,33 +987,26 @@ void parseValue(yyjson_val *val, T &field)
         if constexpr (FieldType::extent == std::dynamic_extent) {
             static_assert(always_false<FieldType>,
                           "jacinth: cannot parse into a dynamically-sized std::span");
-        } else if (yyjson_is_arr(val)) {
-            static constexpr const size_t N = FieldType::extent;
+        } else if (!yyjson_is_arr(val))
+            return jacinth::errc::type_mismatch;
+        static constexpr const size_t N = FieldType::extent;
 
-            size_t idx, max;
-            yyjson_val *elem;
-            yyjson_arr_foreach(val, idx, max, elem)
-            {
-                if (idx >= N)
-                    break;
-                parseValue(elem, field[idx]);
-            }
+        size_t idx, max;
+        yyjson_val *elem;
+        yyjson_arr_foreach(val, idx, max, elem)
+        {
+            if (idx >= N)
+                break;
+            if (auto res = parseValue(elem, field[idx]); res != jacinth::errc::ok)
+                return res;
         }
-    }
-    // optionals
-    else if constexpr (is_optional_v<FieldType>) {
-        if (val && !yyjson_is_null(val)) {
-            typename FieldType::value_type item;
-            parseValue(val, item);
-            field = std::move(item);
-        } else
-            field.reset();
     }
     // maps
     else if constexpr (is_map_v<FieldType>) {
         // TODO(crueter): Really need better err handling
         if (!yyjson_is_obj(val))
-            return;
+            return jacinth::errc::type_mismatch;
+
         using MappedType = typename FieldType::mapped_type;
         field.clear();
 
@@ -835,7 +1016,9 @@ void parseValue(yyjson_val *val, T &field)
         while ((key = yyjson_obj_iter_next(&iter))) {
             auto *sub = yyjson_obj_iter_get_val(key);
             MappedType item;
-            parseValue(sub, item);
+            if (auto res = parseValue(sub, item); res != jacinth::errc::ok)
+                return res;
+
             field.emplace(std::string_view(yyjson_get_str(key), yyjson_get_len(key)),
                           std::move(item));
         }
@@ -846,42 +1029,68 @@ void parseValue(yyjson_val *val, T &field)
     }
     // nested structs, etc.
     else if constexpr (std::is_aggregate_v<FieldType>) {
-        if (yyjson_is_obj(val)) {
-#ifdef JACINTH_USE_REFLECTION
-            yyjson_obj_iter iter;
-            yyjson_obj_iter_init(val, &iter);
-            yyjson_val *key;
-            while ((key = yyjson_obj_iter_next(&iter))) {
-                template for (constexpr auto f :
-                              std::define_static_array(std::meta::nonstatic_data_members_of(
-                                  ^^T, std::meta::access_context::current())))
-                {
-                    constexpr auto name = std::meta::identifier_of(f);
-                    if (yyjson_get_len(key) == name.size() &&
-                        std::memcmp(yyjson_get_str(key), name.data(), name.size()) == 0) {
-                        parseValue(yyjson_obj_iter_get_val(key), field.[:f:]);
-                        break;
-                    }
-                }
-            }
+        if (!yyjson_is_obj(val))
+            return jacinth::errc::type_mismatch;
 
-#else
-            boost::pfr::for_each_field_with_name(
-                field, [val](std::string_view name, auto &sub_field) {
-                    yyjson_val *sub = yyjson_obj_getn(val, name.data(), name.size());
-                    parseValue(sub, sub_field);
-                });
-#endif
+        jacinth::errc result{};
+#ifdef JACINTH_USE_REFLECTION
+        template for (constexpr auto f :
+                      std::define_static_array(std::meta::nonstatic_data_members_of(
+                          ^^T, std::meta::access_context::current())))
+        {
+            if (result != jacinth::errc::ok)
+                return result;
+
+            constexpr auto name = std::meta::identifier_of(f);
+            yyjson_val *sub = yyjson_obj_getn(val, name.data(), name.size());
+            using Sub = std::decay_t<decltype(field.[:f:])>;
+
+            if constexpr (is_optional_v<Sub>) {
+                if (sub)
+                    result = parseValue(sub, field.[:f:]);
+                else
+                    field.[:f:].reset();
+            } else if (!sub) {
+                result = jacinth::errc::missing_value;
+            } else {
+                result = parseValue(sub, field.[:f:]);
+            }
         }
+#else
+        boost::pfr::for_each_field_with_name(
+            field, [val, &result](std::string_view name, auto &sub_field) {
+                if (result != jacinth::errc::ok)
+                    return;
+
+                yyjson_val *sub = yyjson_obj_getn(val, name.data(), name.size());
+                using Sub = std::decay_t<decltype(sub_field)>;
+
+                if constexpr (is_optional_v<Sub>) {
+                    if (sub)
+                        result = parseValue(sub, sub_field);
+                    else
+                        sub_field.reset();
+                } else if (!sub) {
+                    result = jacinth::errc::missing_value;
+                } else {
+                    result = parseValue(sub, sub_field);
+                }
+            });
+#endif
+        return result;
+    } else {
+        return jacinth::errc::type_mismatch;
     }
+
+    return {};
 }
 
 // TODO: handle variant?
 template <typename T>
-void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
+jacinth::errc writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
 {
     if (!val)
-        return;
+        return jacinth::errc::missing_value;
 
     using FieldType = std::decay_t<T>;
 
@@ -891,12 +1100,16 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
         if (yyjson_mut_val *str = yyjson_mut_strncpy(doc, field.data(), field.size()); str) {
             val->tag = str->tag;
             val->uni = str->uni;
+        } else {
+            return jacinth::errc::write_error;
         }
     } else if constexpr (std::is_same_v<FieldType, char *> ||
                          std::is_same_v<FieldType, const char *>) {
         if (yyjson_mut_val *str = yyjson_mut_strcpy(doc, field); str) {
             val->tag = str->tag;
             val->uni = str->uni;
+        } else {
+            return jacinth::errc::write_error;
         }
     } else if constexpr (std::is_floating_point_v<FieldType>) {
         if constexpr (std::is_same_v<FieldType, float>)
@@ -924,15 +1137,19 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
         yyjson_mut_set_arr(val);
         for (const auto &item : field) {
             auto *elem = yyjson_mut_null(doc);
-            yyjson_mut_arr_append(val, elem);
-            writeValue(doc, elem, item);
+            if (!yyjson_mut_arr_append(val, elem))
+                return jacinth::errc::write_error;
+
+            if (auto res = writeValue(doc, elem, item); res != jacinth::errc::ok)
+                return res;
         }
     }
     // optionals
     else if constexpr (is_optional_v<FieldType>) {
-        if (field.has_value())
-            writeValue(doc, val, *field);
-        else
+        if (field.has_value()) {
+            if (auto res = writeValue(doc, val, *field); res != jacinth::errc::ok)
+                return res;
+        } else
             yyjson_mut_set_null(val);
     }
     // maps
@@ -941,8 +1158,11 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
         for (const auto &[k, v] : field) {
             auto *sub = yyjson_mut_null(doc);
             auto *key = yyjson_mut_strncpy(doc, k.data(), k.size());
-            yyjson_mut_obj_put(val, key, sub);
-            writeValue(doc, sub, v);
+            if (!yyjson_mut_obj_put(val, key, sub))
+                return jacinth::errc::write_error;
+
+            if (auto res = writeValue(doc, sub, v); res != jacinth::errc::ok)
+                return res;
         }
     }
     // to_json ADL
@@ -952,30 +1172,50 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
     // nested structs, etc
     else if constexpr (std::is_aggregate_v<FieldType>) {
         yyjson_mut_set_obj(val);
+        jacinth::errc result{};
 #ifdef JACINTH_USE_REFLECTION
         template for (constexpr auto f :
                       std::define_static_array(std::meta::nonstatic_data_members_of(
                           ^^T, std::meta::access_context::current())))
         {
+            if (result != jacinth::errc::ok)
+                return result;
+
             constexpr auto name = std::meta::identifier_of(f);
             auto *sub = yyjson_mut_null(doc);
             auto *key = yyjson_mut_strn(doc, name.data(), name.size());
+
+            // noesc speeds up writes
             if (unsafe_yyjson_is_str_noesc(name.data(), name.size()))
                 unsafe_yyjson_set_tag(key, YYJSON_TYPE_STR, YYJSON_SUBTYPE_NOESC, name.size());
-            yyjson_mut_obj_add(val, key, sub);
-            writeValue(doc, sub, field.[:f:]);
+
+            if (!yyjson_mut_obj_add(val, key, sub))
+                result = jacinth::errc::write_error;
+            else if (auto res = writeValue(doc, sub, field.[:f:]); res != jacinth::errc::ok)
+                result = res;
         }
 #else
         boost::pfr::for_each_field_with_name(field, [&](std::string_view name, auto &sub_field) {
+            if (result != jacinth::errc::ok)
+                return;
+
             auto *sub = yyjson_mut_null(doc);
             auto *key = yyjson_mut_strn(doc, name.data(), name.size());
+
+            // noesc speeds up writes
             if (unsafe_yyjson_is_str_noesc(name.data(), name.size()))
                 unsafe_yyjson_set_tag(key, YYJSON_TYPE_STR, YYJSON_SUBTYPE_NOESC, name.size());
-            yyjson_mut_obj_add(val, key, sub);
-            writeValue(doc, sub, sub_field);
+
+            if (!yyjson_mut_obj_add(val, key, sub))
+                result = jacinth::errc::write_error;
+            else
+                result = writeValue(doc, sub, sub_field);
         });
 #endif
+        return result;
     } else {
         static_assert(always_false<FieldType>, "jacinth: unsupported type for JSON serialization");
     }
+
+    return {};
 }
