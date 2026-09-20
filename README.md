@@ -4,13 +4,14 @@ aka. "JSON for Postmodern C++"
 
 Jacinth is a simple, low-overhead JSON library for C++23 and C++26 that provides a clean, easy-to-use, flexible API, without bloating the library or removing features you expect from your favorite JSON libraries.
 
-## What it has
+## Features
 
 Jacinth is (currently) a relatively thin OOP wrapper around the very fast [yyjson](https://github.com/ibireme/yyjson). It features:
 
 - Compile-time struct reflection, enabling serialization and deserialization of arbitrarily complex struct types with low overhead
   - GCC 16 and up get access to the extremely powerful (and fast) [P2996 Reflection API](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p2996r13.html)
   - Clang, MSVC, and GCC <=15 instead will use [Boost.PFR](https://www.boost.org/doc/libs/latest/doc/html/boost_pfr.html), which isn't as fast as C++26 reflection, but is very close.
+    - The included PFR is version 1.92, but anything newer than 1.80 or so should work.
 - A mutable nlohmann-like JSON object API (`jacinth::json`, `jacinth::mutable_value`)
 - A fast, lazy, on-demand parser for immutable objects (`jacinth::doc`, `jacinth::value`)
 - Custom type parsing through nlohmann-like ADL
@@ -29,23 +30,28 @@ Jacinth is (currently) a relatively thin OOP wrapper around the very fast [yyjso
   - Projects that already use Glaze or nlohmann can get a near-identical API surface for quick migration
   - See [#Integration](#integration)
 
-## What it doesn't have
+## Limitations
 
 Jacinth is intentionally designed in a limited manner that makes it as easy to use as possible. Thus, it lacks certain features and characteristics that you may otherwise expect:
 
 - Robust error handling (for now)
 - Specialized SIMD paths
 - Support for binary or other non-JSON formats
-  - Technically, cJSON and JSON5 are supported through yyjson, but this isn't super supported right now
-- std::variant support (for now)
+  - Technically, cJSON and JSON5 are supported through yyjson, but this isn't really exposed in the C++ API right now.
 - JavaScript/Python-like array/object manipulation
   - This might be added at some point
 - `std::format` specializations (for now)
   - For the time being you can just `jacinth::json::dump`
-- An absolutely zero-overhead wrapper around yyjson
+- Absolutely *zero* overhead
   - Jacinth's safety semantics, error handling, and other goodies generally make this impossible.
   - However, Jacinth is still plenty fast, usually between 80-90% of yyjson. See [#Performance](#performance).
   - Generally, parse/read is nearly as fast as yyjson, but writing is usually around 20% slower due to memory safety shenanigans.
+- Singular API pattern
+  - Jacinth intentionally implements several different API surfaces and patterns so you can choose which way works best. It's generally designed such that it can serve as a near drop-in replacement for nlohmann, while adding extra features to make your life even easier.
+
+## Licensing
+
+I don't know yet. It will *probably* be MIT. I want to make it LGPL, but that has a lot of issues when it comes to C++20 modules. For now assume MIT until licensing is finished.
 
 ## Performance
 
@@ -86,19 +92,45 @@ Jacinth will already be fast no matter what you do, but if you need to squeeze o
 
 ## Integration
 
-Jacinth can be used both as a system and a vendored target. It can be integrated simply via  `find_package(jacinth)` or `add_subdirectory(jacinth)`, respectively.
+Jacinth can be used both as a system and a vendored target. It can be integrated simply via `find_package(jacinth)` or `add_subdirectory(jacinth)`, respectively.
 
 Jacinth creates a `jacinth::jacinth` target, so you can link to Jacinth via `target_link_libraries(MyApp PRIVATE jacinth::jacinth)`. You usually shouldn't need Jacinth within your header files, so internal targets generally won't need `PUBLIC` propagation. Both the system and vendored targets provide a `JACINTH_USE_REFLECTION` option. Enabling this will add `-freflection` to your compile options, force the C++26 standard, and define `JACINTH_USE_REFLECTION` in the module.
 
 In order for Jacinth to properly compile and for `import jacinth;` to work, you MUST turn on `CMAKE_CXX_SCAN_FOR_MODULES`, and use a supported generator (e.g. Ninja or Visual Studio). Obviously you'll need a modern compiler too; GCC >=15, Clang >=19, and MSVC >=2022 should all work fine.
 
+### Adding Jacinth to your project
+
+You can use `FetchContent`, [CPMUtil](https://github.com/crueter/CPMUtil), a Git submodule, or any other dependency vendoring solution of your choice. You should probably use `find_package(jacinth)` as well (CPMUtil will handle this for you).
+
 ### Caveats
 
-As with all modules, you *must* ensure that the target you're importing the module into has more or less the same compiler flags as Jacinth. If you set a bunch of additional flags e.g. `-fwrapv` or `-fno-rtti` to your source files, Jacinth must also have these applied. Linking to `jacinth::jacinth` will automatically enable C++26 and reflection features if you have `JACINTH_USE_REFLECTION` on, but you may wish to enable this for your entire project if using Jacinth's reflection features anyways.
+As with all modules, you *must* ensure that the target you're importing the module into has more or less the same compiler flags as Jacinth. If you set a bunch of additional flags e.g. `-fwrapv` or `-fno-rtti` to your source files, Jacinth must also have these applied.
+
+Linking to `jacinth::jacinth` will automatically enable C++26 and reflection features if you have `JACINTH_USE_REFLECTION` on, but you may wish to enable this for your entire project if using Jacinth's reflection features.
 
 ## Usage
 
-A few usage examples and tricks. Most of these can be found in [`test/main.cpp`](test/main.cpp).
+Abstract:
+
+- Use `jacinth::doc` for *immutable* JSON documents, aka those which you don't intend to edit/mutate.
+- Use `jacinth::json` for *mutable* JSON documents, aka those which you intend to edit OR create from scratch. It's slower than `jacinth::doc`, so if your application is speed-conscious you should use that when possible.
+- Parse into a JSON or struct object with `jacinth::{doc,json}::read(string)`
+- Dump any JSON value with `jacinth::{doc,json}::dump(object)`, or `object.dump` on a Jacinth JSON value (doc, json, value, mutable_value)
+- Convert JSON documents to any type you wish
+  - Implicitly: `MyStruct my_object = jacinth::doc::read(data);`
+  - Explicitly: `auto my_object = jacinth::doc::read<MyStruct>(data);`
+  - Explicitly, with `std::expected` error handling: `auto my_object = jacinth::doc::try_read<MyStruct>(data);`
+- Convert JSON values to any type you wish
+  - Implicitly: `uint64_t number = doc["number"];` or `doc.get("number");`
+  - Explicitly: `auto number = doc["number"].get<uint64_t>();` or `doc.get<uint64_t>("number");`
+  - Explicitly, with error handling: `auto number = doc["number"].try_get<uint64_t>();` or `doc.try_get<uint64_t>("number");`
+- Read, write, and create arrays and objects
+  - Read arrays: `auto number = doc["numbers"].get<uint64_t>(5);`
+  - Write arrays: `json["numbers"][4] = 80000;`
+  - Read nested objects and arrays: `auto name = doc["meetings"][3]["people"][0].get<std::string>("name");`
+  - Write nested objects and arrays: `json["meetings"][3]["people"][0]["name"] = "Bella";`
+
+Below are a few usage examples and tricks. Most of these can be found in [`test/main.cpp`](test/main.cpp).
 
 ### Simple struct serialization
 
@@ -132,8 +164,7 @@ std::println("  Assets:");
 
 for (const auto &a : std::as_const(release.assets)) {
     std::println("    Asset {}", a.name);
-    std::println("      Name: {}", a.name);
-    std::println("      Digest: {}", a.digets.value_or("Not Present"));
+    std::println("      Digest: {}", a.digest.value_or("Not Present"));
 }
 ```
 
@@ -178,7 +209,7 @@ std::println("Jacinth: {}", json.dump());
 
 You can also create arrays from scratch. If you access a currently out-of-bound index, the array will be filled with nulls until it reaches your desired index:
 
-```json
+```cpp
 jacinth::json json;
 json["hello"]["nested"][3] = 15.0;
 
@@ -200,19 +231,23 @@ Note the `as_array` in this example; see more of that in [#Iteration](#iteration
 ```cpp
 auto doc = jacinth::doc::read(data);
 
-std::println("Release {}", json["name"].as<std::string>());
-std::println("  Tag: {}", json["tag_name"].as<std::string>());
-std::println("  URL: {}", json["html_url"].as<std::string>());
+std::println("Release {}", doc.get<std::string>("name"));
+std::println("  Tag: {}", doc.get<std::string>("tag_name"));
+std::println("  URL: {}", doc.get<std::string>("html_url"));
 std::println("  Assets:");
 
-auto assets = json["assets"];
+auto assets = doc["assets"];
 
 for (auto a : assets.as_array()) {
-    std::println("    Asset: {}", a["name"].as<std::string>());
+    std::println("    Asset: {}", a.get<std::string>("name"));
 }
 ```
 
-Also note the `as<std::string>()` here. Generally speaking, this is only necessary for `std::string` or other cases where an assignment may be ambiguous. In this case, the compiler isn't able to automatically discern whether to use `std::string_view`, `const char*`, or any of the other implicit conversions into `std::string`. For most primitives, it should just work without any hitches.
+Also note the `get<std::string>("key")` here.
+
+If `doc["name"]` were instead assigned to a variable, `std::string name = doc["name"]` would not work, as the compiler has no way to disambiguate between conversions to `std::string_view`, `const char*`, etc. Like the above example, you could use `auto name = doc.get<std::string>("name")`, or you could use `doc["name"].get<std::string>()`. Generally speaking, this is only necessary for `std::string` or other cases where an assignment may be ambiguous.
+
+More docs on conversions like this will come at a later date. Fun fact in the meantime: you can interpret an entire JSON document as any type you want, and this works with `jacinth::json::dump`!
 
 ### Pretty-print
 
@@ -252,7 +287,7 @@ void to_json(jacinth::mutable_value json, const CustomStruct &custom) {
 }
 
 void from_json(const jacinth::value &json, CustomStruct &custom) {
-    custom.name = std::format("Derived value from from_json: {}", json["name"].as<std::string>());
+    custom.name = std::format("Derived value from from_json: {}", json.get<std::string>("name"));
 }
 
 }
@@ -287,7 +322,7 @@ json["features"] = {
 };
 
 for (auto [k, v] : json.as_object()) {
-    std::println("{}: {}", std::string(k), jacinth::json::dump(v));
+    std::println("{}: {}", std::string(k), v.dump());
 }
 ```
 
@@ -303,17 +338,17 @@ Also notice that `dump`/`dump_to` directly support Jacinth's JSON value types. T
 
 ### Error Handling
 
-Jacinth allows consumers to opt-in to error handling for invalid JSONs, missing values, mismatched types, etc. The default `read`/`as`/`get` methods will just ignore these errors and give a blank/default-constructed value. This is useful in cases where you know the JSON will be exactly in the schema you expect, and file and I/O errors are already accounted for.
+Jacinth allows consumers to opt-in to error handling for invalid JSONs, missing values, mismatched types, etc. The default `read`/`get` methods will just ignore these errors and give a blank/default-constructed value. This is useful in cases where you know the JSON will be exactly in the schema you expect, and file and I/O errors are already accounted for.
 
 However, you may choose to opt into `std::expected`-based error handling. The primary differences are:
 
 - `read` -> `try_read`
-- `as<T>` -> `try_as<T>`
-- Implicit type conversion from `json["key"]` -> `json["key"].try_as<T>`, or `json.try_get<T>("key")`
+- `get<T>` -> `try_get<T>`
+- Implicit type conversion from `json["key"]` -> `json["key"].try_get<T>`, or `json.try_get<T>("key")`
 
 Currently, write operations don't have error handling. This is simply due to the sheer amount of overloads this would require. The library internals *do* support this so I'll get to adding it eventually.
 
-These examples use a `auto ... = read<T>` pattern as opposed to previous example's `T ... = read` pattern. `try_` methods are better off using explicit templating, so the compiler can automatically deduce `std::expected<T, std::error_code>` (and so you don't have to type that out each time).
+These examples use a `auto ... = read<T>` pattern as opposed to the previous example's `T ... = read` pattern. `try_` methods are better off using explicit templating, so the compiler can automatically deduce `std::expected<T, std::error_code>` (and so you don't have to type that out each time).
 
 `try_read`:
 
@@ -328,7 +363,7 @@ if (maybe_car) {
 }
 ```
 
-`try_as`, `try_get`:
+`try_get`:
 
 ```cpp
 auto maybe_release = jacinth::json::try_read(release_data);
@@ -337,11 +372,24 @@ if (!maybe_release) {
     // ...
 } else {
     auto release = maybe_release.value();
-    auto maybe_name = release["created_at"].try_as<std::string>();
+    auto maybe_name = release["created_at"].try_get<std::string>();
     // or...
     auto maybe_name = release.try_get<std::string>("created_at");
     if (!maybe_name) {
-        std::println("created_at in unexpected format: expected string, got {}", jacinth::json::dump(release["created_at"]));
+        std::println("created_at in unexpected format: expected string, "
+          "got {}", jacinth::json::dump(release["created_at"]));
     }
 }
+```
+
+### Other Fun Stuff
+
+#### Accessing `jacinth::value` and `jacinth::mutable_value`
+
+The `get`/`try_get` methods and the `[]` operator will always try to convert to a reasonable type, given the variable they are being assigned to. However, you can leave this as a `jacinth::value` or `jacinth::mutable_value` by assigning to an `auto` variable:
+
+```cpp
+// these will be jacinth::values
+auto url_v = doc.get("html_url");
+auto asset_0_v = doc.get("assets")[0];
 ```

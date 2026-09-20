@@ -137,6 +137,7 @@ protected:
     yyjson_val *m_val;
 
 public:
+    explicit value() : m_doc(nullptr), m_val(nullptr) {}
     value(yyjson_doc *d, yyjson_val *v) : m_doc(d), m_val(v) {}
 
     // validity checks
@@ -156,6 +157,11 @@ public:
         return operator[](std::string_view{key});
     }
 
+    value operator[](int i) const
+    {
+        return operator[](static_cast<std::size_t>(i));
+    }
+
     value operator[](std::size_t i) const
     {
         return {m_doc, yyjson_arr_get(m_val, i)};
@@ -171,7 +177,7 @@ public:
 
     // explicit conv
     template <typename T>
-    T as() const
+    T get() const
     {
         T t = operator T();
         return t;
@@ -179,7 +185,7 @@ public:
 
     // explicit conv, with error handling
     template <typename T>
-    std::expected<T, std::error_code> try_as() const
+    std::expected<T, std::error_code> try_get() const
     {
         T t{};
         auto res = parseValue(m_val, t);
@@ -188,21 +194,34 @@ public:
         return std::unexpected(jacinth::make_error_code(res));
     }
 
-    // TODO: at method?
-
-    // Try to get a value, or the default if not
-    template <typename T>
-    T get(std::string_view key, T default_value = {}) const
+    // Try to get a value/index, or null if not
+    template <typename Key>
+    value get(Key key) const
     {
         value v = operator[](key);
-        return v ? T(v) : default_value;
+        return !v.is_null() ? v : value{m_doc, nullptr};
     }
 
-    // Try to get a value, return an error if not
-    template <typename T>
-    std::expected<T, std::error_code> try_get(std::string_view key) const
+    // Try to get a value/index, or the default if not
+    template <typename T, typename Key>
+    T get(Key key, T default_value = {}) const
     {
-        return operator[](key).try_as<T>();
+        value v = operator[](key);
+        return !v.is_null() ? T(v) : default_value;
+    }
+
+    // Try to get a value/index, return an error if not
+    template <typename Key>
+    std::expected<value, std::error_code> try_get(Key key) const
+    {
+        return operator[](key).template try_get<value>();
+    }
+
+    // Try to get a value/index, return an error if not
+    template <typename T, typename Key>
+    std::expected<T, std::error_code> try_get(Key key) const
+    {
+        return operator[](key).template try_get<T>();
     }
 
     // TODO: byte size? obj size?
@@ -271,7 +290,7 @@ public:
         auto d = try_read(s, flg);
         if (!d)
             return std::unexpected(d.error());
-        return d.value().template try_as<T>();
+        return d.value().template try_get<T>();
     }
 
     explicit doc(yyjson_doc *d) noexcept : value(d, d ? d->root : nullptr) {}
@@ -329,6 +348,12 @@ private:
 public:
     mutable_value(yyjson_mut_doc *d, yyjson_mut_val *v) : m_doc(d), m_val(v) {}
 
+    // validity checks
+    bool is_null() const
+    {
+        return !m_val || yyjson_mut_is_null(m_val);
+    }
+
     // assignment
     template <typename T>
     mutable_value &operator=(const T &v)
@@ -370,7 +395,7 @@ public:
 
     // explicit conv
     template <typename T>
-    T as() const
+    T get() const
     {
         T t = operator T();
         return t;
@@ -378,7 +403,7 @@ public:
 
     // explicit conv, with error handling
     template <typename T>
-    std::expected<T, std::error_code> try_as() const
+    std::expected<T, std::error_code> try_get() const
     {
         if (!m_val)
             return std::unexpected(jacinth::make_error_code(jacinth::errc::missing_value));
@@ -393,21 +418,34 @@ public:
         return std::unexpected(jacinth::make_error_code(res));
     }
 
-    // TODO: at method?
-
-    // Try to get a value, or the default if not
-    template <typename T>
-    T get(std::string_view key, T default_value = {})
+    // Try to get a value/index, or null if not
+    template <typename Key>
+    mutable_value get(Key key)
     {
-        value v = operator[](key);
-        return v ? T(v) : default_value;
+        mutable_value v = operator[](key);
+        return !v.is_null() ? v : mutable_value{m_doc, nullptr};
     }
 
-    // Try to get a value, return an error if not
-    template <typename T>
-    std::expected<T, std::error_code> try_get(std::string_view key)
+    // Try to get a value/index, or the default if not
+    template <typename T, typename Key>
+    T get(Key key, T default_value = {})
     {
-        return operator[](key).try_as<T>();
+        mutable_value v = operator[](key);
+        return !v.is_null() ? T(v) : default_value;
+    }
+
+    // Try to get a value/index, return an error if not
+    template <typename Key>
+    std::expected<mutable_value, std::error_code> try_get(Key key)
+    {
+        return operator[](key).template try_get<mutable_value>();
+    }
+
+    // Try to get a value/index, return an error if not
+    template <typename T, typename Key>
+    std::expected<T, std::error_code> try_get(Key key)
+    {
+        return operator[](key).template try_get<T>();
     }
 
     // TODO: append/prepend/insert, set?
@@ -467,6 +505,11 @@ public:
     mutable_value operator[](const char *key)
     {
         return operator[](std::string_view{key});
+    }
+
+    mutable_value operator[](int i)
+    {
+        return operator[](static_cast<std::size_t>(i));
     }
 
     mutable_value operator[](std::size_t i)
@@ -613,7 +656,7 @@ public:
         if (!d)
             return std::unexpected(d.error());
 
-        return d.value().template try_as<T>();
+        return d.value().template try_get<T>();
     }
 
     // Write directly from an object (non-allocating)

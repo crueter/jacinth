@@ -84,7 +84,7 @@ void to_json(jacinth::mutable_value json, const CustomStruct &custom)
 
 void from_json(const jacinth::value &json, CustomStruct &custom)
 {
-    custom.name = std::format("Derived value from from_json: {}", json["name"].as<std::string>());
+    custom.name = std::format("Derived value from from_json: {}", json.get<std::string>("name"));
 }
 
 } // namespace
@@ -156,16 +156,26 @@ int main()
     {
         auto json = jacinth::doc::read(data);
 
+        std::println("{}", json.dump());
+
+        // this should be a jacinth::value
+        auto url_v = json.get("html_url");
+        auto url = url_v.get<std::string>();
+        std::string tag = json.get("tag_name");
+
+        auto asset_0_v = json.get("assets").get(0);
+        std::println("Asset 0: {}", asset_0_v.get<std::string>("name"));
+
         // TODO: std::formatter specializations
-        std::println("Release {}", json["name"].as<std::string>());
-        std::println("  Tag: {}", json["tag_name"].as<std::string>());
-        std::println("  URL: {}", json["html_url"].as<std::string>());
+        std::println("Release {}", json["name"].get<std::string>());
+        std::println("  Tag: {}", tag);
+        std::println("  URL: {}", url);
         std::println("  Assets:");
 
         auto assets = json["assets"];
 
         for (auto a : assets.as_array()) {
-            std::println("    Asset: {}", a["name"].as<std::string>());
+            std::println("    Asset: {}", a.get<std::string>("name"));
         }
     }
 
@@ -188,7 +198,7 @@ int main()
 
         // TODO: is_type funcs
         for (auto [k, v] : json.as_object()) {
-            std::println("  {}: {}", std::string(k), jacinth::json::dump(v));
+            std::println("  {}: {}", std::string(k), v.dump());
         }
     }
 
@@ -321,10 +331,10 @@ int main()
         jacinth::doc a = jacinth::doc::read("{\"x\":1}");
         {
             jacinth::doc b = jacinth::doc::read("{\"y\":2}");
-            std::println("before: a.x={}", a["x"].as<int>());
+            std::println("before: a.x={}", a.get<int>("x"));
             a = std::move(b);
         }
-        std::println("after:  a.y={}", a["y"].as<int>());
+        std::println("after:  a.y={}", a.get<int>("y"));
     }
 
     // create a nested json array
@@ -378,54 +388,54 @@ int main()
                 "opt_null": null
             })");
 
-            expect_errc(v["nil"].try_as<std::string>(), jacinth::errc::type_mismatch,
+            expect_errc(v.try_get<std::string>("nil"), jacinth::errc::type_mismatch,
                         "null as string");
-            expect_errc(v["s"].try_as<int>(), jacinth::errc::type_mismatch, "string as int");
-            expect_errc(v["s"].try_as<double>(), jacinth::errc::type_mismatch, "string as double");
-            expect_errc(v["n"].try_as<std::string>(), jacinth::errc::type_mismatch,
+            expect_errc(v.try_get<int>("s"), jacinth::errc::type_mismatch, "string as int");
+            expect_errc(v.try_get<double>("s"), jacinth::errc::type_mismatch, "string as double");
+            expect_errc(v.try_get<std::string>("n"), jacinth::errc::type_mismatch,
                         "int as string");
-            expect_errc(v["n"].try_as<bool>(), jacinth::errc::type_mismatch, "int as bool");
-            expect_errc(v["b"].try_as<int>(), jacinth::errc::type_mismatch, "bool as int");
-            expect_errc(v["obj"].try_as<int>(), jacinth::errc::type_mismatch, "object as int");
-            expect_errc(v["arr"].try_as<int>(), jacinth::errc::type_mismatch, "array as int");
+            expect_errc(v.try_get<bool>("n"), jacinth::errc::type_mismatch, "int as bool");
+            expect_errc(v.try_get<int>("b"), jacinth::errc::type_mismatch, "bool as int");
+            expect_errc(v.try_get<int>("obj"), jacinth::errc::type_mismatch, "object as int");
+            expect_errc(v.try_get<int>("arr"), jacinth::errc::type_mismatch, "array as int");
 
             // missing key / out-of-range array index
-            expect_errc(v["missing"].try_as<int>(), jacinth::errc::missing_value,
+            expect_errc(v.try_get<int>("missing"), jacinth::errc::missing_value,
                         "missing key as int");
             expect_errc(v.try_get<int>("missing"), jacinth::errc::missing_value,
                         "try_get missing key");
-            expect_errc(v["arr"][99].try_as<int>(), jacinth::errc::missing_value,
+            expect_errc(v["arr"][99].try_get<int>(), jacinth::errc::missing_value,
                         "array index out of range");
 
             // container element type errors
-            expect_errc(v["badarr"].try_as<std::vector<int>>(), jacinth::errc::type_mismatch,
+            expect_errc(v.try_get<std::vector<int>>("badarr"), jacinth::errc::type_mismatch,
                         "vector<int> from [1, \"two\"]");
-            expect_errc(v["badarr"].try_as<std::array<float, 2>>(), jacinth::errc::type_mismatch,
+            expect_errc(v.try_get<std::array<float, 2>>("badarr"), jacinth::errc::type_mismatch,
                         "array<float,2> from [1, \"two\"]");
 
             // optionals: present / null / missing all succeed
-            auto opt_good = v["opt_good"].try_as<std::optional<int>>();
+            auto opt_good = v.try_get<std::optional<int>>("opt_good");
             expect(opt_good.has_value() && opt_good->has_value() && **opt_good == 7,
                    "optional present value");
-            auto opt_null = v["opt_null"].try_as<std::optional<int>>();
+            auto opt_null = v.try_get<std::optional<int>>("opt_null");
             expect(opt_null.has_value() && !opt_null->has_value(), "optional null value");
-            auto opt_missing = v["nope"].try_as<std::optional<int>>();
+            auto opt_missing = v.try_get<std::optional<int>>("nope");
             expect(opt_missing.has_value() && !opt_missing->has_value(), "optional missing key");
-            expect_errc(v["opt_good"].try_as<std::optional<std::string>>(),
+            expect_errc(v.try_get<std::optional<std::string>>("opt_good"),
                         jacinth::errc::type_mismatch, "optional int from string");
         }
 
         // map with a bad element type
         {
             auto m = jacinth::doc::read(R"({"name":"ok","values":{"a":"boom"}})");
-            expect_errc(m.try_as<MapStruct>(), jacinth::errc::type_mismatch,
+            expect_errc(m.try_get<MapStruct>(), jacinth::errc::type_mismatch,
                         "map<string,uint32_t> from bad value");
         }
 
         // enum from a string
         {
             auto c = jacinth::doc::read(R"({"make":"x","model":"y","year":1,"condition":"New"})");
-            expect_errc(c.try_as<Car>(), jacinth::errc::type_mismatch, "enum from string");
+            expect_errc(c.try_get<Car>(), jacinth::errc::type_mismatch, "enum from string");
         }
 
         // error_code ergonomics: == errc and category exposure
