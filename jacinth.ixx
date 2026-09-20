@@ -78,6 +78,7 @@ struct write_opts {
 
 // An immutable JSON-ish value
 class value {
+protected:
     yyjson_doc *m_doc;
     yyjson_val *m_val;
 
@@ -169,23 +170,23 @@ public:
 
 // Read-only JSON tree
 class doc : public value {
-    yyjson_doc *m_doc;
-
 public:
     static doc read(std::string_view s)
     {
         return doc{yyjson_read(s.data(), s.size(), 0)};
     }
 
-    explicit doc(yyjson_doc *d) noexcept : value(d, d ? d->root : nullptr), m_doc(d) {}
+    explicit doc(yyjson_doc *d) noexcept : value(d, d ? d->root : nullptr) {}
 
-    doc(doc &&o) noexcept : value(o), m_doc(std::exchange(o.m_doc, nullptr)) {}
+    doc(doc &&o) noexcept : value(std::exchange(o.m_doc, nullptr), std::exchange(o.m_val, nullptr))
+    {
+    }
+
     doc(doc const &) = delete;
     doc &operator=(doc const &) = delete;
     doc &operator=(doc &&o) noexcept
     {
-        std::swap(m_doc, o.m_doc);
-        static_cast<value&>(*this) = value{m_doc, m_doc ? m_doc->root : nullptr};
+        std::swap(static_cast<value&>(*this), static_cast<value&>(o));
         return *this;
     }
 
@@ -391,23 +392,17 @@ public:
 // Read-write JSON tree
 class json : public mutable_value {
     using base = mutable_value;
-    yyjson_mut_doc *m_doc;
 
-    explicit json(yyjson_mut_doc *d) noexcept : m_doc(d) { rebind(); }
-
-    void rebind() noexcept
-    {
-        base::m_doc = m_doc;
-        base::m_val = m_doc ? m_doc->root : nullptr;
-    }
+    explicit json(yyjson_mut_doc *d) noexcept : base(d, d ? d->root : nullptr) {}
 
 public:
     using base::operator=;
 
-    json() : m_doc(yyjson_mut_doc_new(nullptr))
+    json() : base(yyjson_mut_doc_new(nullptr), nullptr)
     {
-        yyjson_mut_doc_set_root(m_doc, yyjson_mut_null(m_doc));
-        rebind();
+        auto root = yyjson_mut_null(m_doc);
+        yyjson_mut_doc_set_root(m_doc, root);
+        m_val = root;
     }
 
     explicit json(doc const &d) : json(yyjson_doc_mut_copy(d.raw(), nullptr)) {}
@@ -430,16 +425,13 @@ public:
         yyjson_mut_doc_free(m_doc);
     }
 
-    json(json &&o) noexcept : m_doc(std::exchange(o.m_doc, nullptr))
+    json(json &&o) noexcept : base(std::exchange(o.m_doc, nullptr), std::exchange(o.m_val, nullptr))
     {
-        rebind();
     }
     json(json const &o) : json(yyjson_mut_doc_mut_copy(o.m_doc, nullptr)) {}
     json &operator=(json &&o) noexcept
     {
-        std::swap(m_doc, o.m_doc);
-        rebind();
-        o.rebind();
+        std::swap(static_cast<base &>(*this), static_cast<base &>(o));
         return *this;
     }
 
