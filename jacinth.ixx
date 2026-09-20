@@ -1,9 +1,11 @@
 module;
 
+#include <array>
 #include <cstdint>
 #include <cstring>
 #include <map>
 #include <optional>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -143,6 +145,23 @@ public:
         return yyjson_is_arr(m_val);
     }
 
+    // dump this subtree as a JSON string
+    std::string dump(write_opts opts = {}) const
+    {
+        std::string s;
+        dump_to(s, opts);
+        return s;
+    }
+
+    // non-allocating dump into an existing string
+    void dump_to(std::string &s, write_opts opts = {}) const
+    {
+        std::size_t len = 0;
+        char *buf = yyjson_val_write(m_val, opts.to_flags(), &len);
+        s.assign(buf ? buf : "", buf ? len : 0);
+        free(buf);
+    }
+
     // iter
     iterable_view<const_object_iterator> as_object() const;
     iterable_view<const_array_iterator> as_array() const;
@@ -179,6 +198,23 @@ public:
     {
         T t = operator T();
         return t;
+    }
+
+    // dump the whole document as a JSON string
+    std::string dump(write_opts opts = {}) const
+    {
+        std::string s;
+        dump_to(s, opts);
+        return s;
+    }
+
+    // non-allocating dump into an existing string
+    void dump_to(std::string &s, write_opts opts = {}) const
+    {
+        std::size_t len = 0;
+        char *buf = m_doc ? yyjson_val_write(m_doc->root, opts.to_flags(), &len) : nullptr;
+        s.assign(buf ? buf : "", buf ? len : 0);
+        free(buf);
     }
 
     value root() const
@@ -250,6 +286,19 @@ public:
     mutable_value &operator=(const T &v)
     {
         writeValue(m_doc, m_val, v);
+        return *this;
+    }
+
+    // initializer-list assignment
+    template <typename T>
+    mutable_value &operator=(std::initializer_list<T> values)
+    {
+        yyjson_mut_set_arr(m_val);
+        for (const auto &item : values) {
+            auto *elem = yyjson_mut_null(m_doc);
+            yyjson_mut_arr_append(m_val, elem);
+            writeValue(m_doc, elem, item);
+        }
         return *this;
     }
 
@@ -369,6 +418,23 @@ public:
         return yyjson_mut_is_arr(m_val);
     }
 
+    // dump this subtree as a JSON string
+    std::string dump(write_opts opts = {}) const
+    {
+        std::string s;
+        dump_to(s, opts);
+        return s;
+    }
+
+    // non-allocating dump into an existing string
+    void dump_to(std::string &s, write_opts opts = {}) const
+    {
+        std::size_t len = 0;
+        char *buf = m_val ? yyjson_mut_val_write(m_val, opts.to_flags(), &len) : nullptr;
+        s.assign(buf ? buf : "", buf ? len : 0);
+        free(buf);
+    }
+
     // iter
     iterable_view<mut_object_iterator> as_object();
     iterable_view<mut_array_iterator> as_array();
@@ -392,6 +458,13 @@ public:
     json(const T &v) : json()
     {
         operator=(v);
+    }
+
+    // initializer-list construction
+    template <typename T>
+    json(std::initializer_list<T> values) : json()
+    {
+        operator=(values);
     }
 
     ~json()
@@ -433,7 +506,7 @@ public:
         yyjson_doc *d = yyjson_read(s.data(), s.size(), flg);
         yyjson_mut_doc *m = yyjson_doc_mut_copy(d, nullptr);
         yyjson_doc_free(d);
-        return json{m};
+        return json(m);
     }
 
     // allocating dump
@@ -470,6 +543,48 @@ public:
         return json.dump(opts);
     }
 
+    // dump from an existing mutable node
+    static std::string dump(const mutable_value &value, write_opts opts = {})
+    {
+        std::string s;
+        dump_to(value, s, opts);
+        return s;
+    }
+
+    static void dump_to(const mutable_value &value, std::string &s,
+                        write_opts opts = {})
+    {
+        value.dump_to(s, opts);
+    }
+
+    // dump an existing read-only doc
+    static std::string dump(const doc &value, write_opts opts = {})
+    {
+        std::string s;
+        dump_to(value, s, opts);
+        return s;
+    }
+
+    static void dump_to(const doc &value, std::string &s,
+                        write_opts opts = {})
+    {
+        value.dump_to(s, opts);
+    }
+
+    // dump an existing immutable value
+    static std::string dump(const value &node, write_opts opts = {})
+    {
+        std::string s;
+        dump_to(node, s, opts);
+        return s;
+    }
+
+    static void dump_to(const value &node, std::string &s,
+                        write_opts opts = {})
+    {
+        node.dump_to(s, opts);
+    }
+
     // freeze this into a read-only doc
     doc freeze() const
     {
@@ -482,6 +597,19 @@ public:
     json &operator=(const T &v)
     {
         writeValue(m_doc, m_doc->root, v);
+        return *this;
+    }
+
+    // initializer-list assignment
+    template <typename T>
+    json &operator=(std::initializer_list<T> values)
+    {
+        yyjson_mut_set_arr(m_doc->root);
+        for (const auto &item : values) {
+            auto *elem = yyjson_mut_null(m_doc);
+            yyjson_mut_arr_append(m_doc->root, elem);
+            writeValue(m_doc, elem, item);
+        }
         return *this;
     }
 
@@ -731,11 +859,28 @@ struct is_vector : std::false_type {};
 template <typename T, typename Alloc>
 struct is_vector<std::vector<T, Alloc>> : std::true_type {};
 
-template <typename T, std::size_t N>
-struct is_vector<std::array<T, N>> : std::true_type {};
-
 template <typename T>
 inline constexpr bool is_vector_v = is_vector<T>::value;
+
+// array specializations
+template <typename T>
+struct is_array : std::false_type {};
+
+template <typename T, std::size_t N>
+struct is_array<std::array<T, N>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_array_v = is_array<T>::value;
+
+// span specializations
+template <typename T>
+struct is_span : std::false_type {};
+
+template <typename T, std::size_t E>
+struct is_span<std::span<T, E>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_span_v = is_span<T>::value;
 
 // optional specializations
 template <typename T>
@@ -806,6 +951,39 @@ void parseValue(yyjson_val *val, T &field)
             yyjson_val *elem;
             yyjson_arr_foreach(val, idx, max, elem)
             {
+                parseValue(elem, field[idx]);
+            }
+        }
+    }
+    // fixed-size std::array
+    else if constexpr (is_array_v<FieldType>) {
+        if (yyjson_is_arr(val)) {
+            static constexpr const size_t N = std::tuple_size_v<FieldType>;
+
+            size_t idx, max;
+            yyjson_val *elem;
+            yyjson_arr_foreach(val, idx, max, elem)
+            {
+                if (idx >= N)
+                    break;
+                parseValue(elem, field[idx]);
+            }
+        }
+    }
+    // static-extent std::span
+    else if constexpr (is_span_v<FieldType>) {
+        if constexpr (FieldType::extent == std::dynamic_extent) {
+            static_assert(always_false<FieldType>,
+                          "jacinth: cannot parse into a dynamically-sized std::span");
+        } else if (yyjson_is_arr(val)) {
+            static constexpr const size_t N = FieldType::extent;
+
+            size_t idx, max;
+            yyjson_val *elem;
+            yyjson_arr_foreach(val, idx, max, elem)
+            {
+                if (idx >= N)
+                    break;
                 parseValue(elem, field[idx]);
             }
         }
@@ -882,15 +1060,19 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
 
     using FieldType = std::decay_t<T>;
 
-    // TODO: is non-copied safe?
+    // copy strings into the doc pool
     if constexpr (std::is_same_v<FieldType, std::string> ||
                   std::is_same_v<FieldType, std::string_view>) {
-        // auto *str = yyjson_mut_strncpy(doc, field.data(), field.size());
-        yyjson_mut_set_strn(val, field.data(), field.size());
+        if (yyjson_mut_val *str = yyjson_mut_strncpy(doc, field.data(), field.size()); str) {
+            val->tag = str->tag;
+            val->uni = str->uni;
+        }
     } else if constexpr (std::is_same_v<FieldType, char *> ||
                          std::is_same_v<FieldType, const char *>) {
-        // auto *str = yyjson_mut_strcpy(doc, field);
-        yyjson_mut_set_strn(val, field, strlen(field));
+        if (yyjson_mut_val *str = yyjson_mut_strcpy(doc, field); str) {
+            val->tag = str->tag;
+            val->uni = str->uni;
+        }
     } else if constexpr (std::is_floating_point_v<FieldType>) {
         if constexpr (std::is_same_v<FieldType, float>)
             yyjson_mut_set_float(val, float(field));
@@ -912,8 +1094,8 @@ void writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
         else
             yyjson_mut_set_int(val, int64_t(static_cast<UnderlyingType>(field)));
     }
-    // vectors
-    else if constexpr (is_vector_v<FieldType>) {
+    // vectors, arrays, spans
+    else if constexpr (is_vector_v<FieldType> || is_array_v<FieldType> || is_span_v<FieldType>) {
         yyjson_mut_set_arr(val);
         for (const auto &item : field) {
             auto *elem = yyjson_mut_null(doc);

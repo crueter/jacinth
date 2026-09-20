@@ -67,6 +67,14 @@ if (JACINTH_USE_REFLECTION)
     set_source_files_properties(jacinth.ixx PROPERTIES
         COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:CXX>:-freflection>"
         COMPILE_DEFINITIONS "JACINTH_USE_REFLECTION")
+
+    target_compile_definitions(jacinth INTERFACE
+        $<BUILD_INTERFACE:JACINTH_USE_REFLECTION>)
+    target_compile_options(jacinth INTERFACE
+        $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-freflection>>)
+    target_compile_features(jacinth INTERFACE
+        $<BUILD_INTERFACE:cxx_std_26>)
+
 endif()
 
 target_sources(jacinth PUBLIC

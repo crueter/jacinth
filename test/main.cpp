@@ -1,5 +1,7 @@
+#include <array>
 #include <fstream>
 #include <print>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -31,6 +33,15 @@ struct Release {
 struct ArrayStruct{
     std::string label;
     std::array<float, 4> values;
+};
+
+struct SpanWriteStruct {
+    std::string label;
+    std::span<const double, 3> values;
+};
+
+struct SpanReadStruct {
+    std::span<int, 3> values;
 };
 
 struct MapStruct {
@@ -135,15 +146,20 @@ int main()
     // Create a JSON from scratch
     {
         auto json = jacinth::json();
-        json["hi"] = "Hello World!", json["creator"] = "Jacinth, by crueter";
-        json["files"] = newAssets;
+        json["name"] = "Jacinth";
+        json["creator"] = "crueter";
+        json["features"] = {
+            "Modules",
+            "Reflection",
+            "OOP API"
+        };
 
         auto dumped = json.dump();
         std::println("Dumped: {}", dumped);
 
         // TODO: is_type funcs
         for (auto [k, v] : json.as_object()) {
-            std::println("  {}: {}", std::string(k), v.as<std::string>());
+            std::println("  {}: {}", std::string(k), jacinth::json::dump(v));
         }
     }
 
@@ -189,6 +205,15 @@ int main()
         std::string str;
         jacinth::json::dump_to(s, str, {.pretty = true});
         std::println("{}", str);
+
+        // direct map serialization
+        std::map<std::string, int> people = {
+            {"James", 23},
+            {"Kayla", 76},
+            {"Thomas", 51}
+        };
+
+        std::println("direct map serialization: {}", jacinth::json::dump(people));
     }
 
     // Custom to/from json
@@ -213,7 +238,28 @@ int main()
             }
         };
 
-        std::println("std::array struct: {}", jacinth::json::dump(s));
+        const auto dumped = jacinth::json::dump(s);
+        std::println("std::array: {}", dumped);
+
+        ArrayStruct back = jacinth::json::read(dumped);
+        std::println("  label: {}", back.label);
+        std::println("  values: {} {} {} {}",
+                     back.values[0], back.values[1], back.values[2], back.values[3]);
+    }
+
+    // test std::span
+    {
+        std::array<double, 3> vals = {1.5, 2.5, 3.5};
+
+        SpanWriteStruct s = {"SpanWriteStruct", vals};
+        std::println("static-extent span struct: {}", jacinth::json::dump(s));
+
+        std::span<const double> dynamic(vals);
+        auto dumped = jacinth::json::dump(dynamic);
+        std::println("dynamic-extent span: {}", dumped);
+
+        vals = jacinth::doc::read(dumped);
+        std::println("static-extent span read: {}", vals);
     }
 
     // enum
@@ -228,5 +274,51 @@ int main()
             std::println("  Condition: {}", int(car.condition));
             ++i;
         }
+    }
+
+    // initializer list
+    {
+        jacinth::json json;
+        json["name"] = "Jacinth";
+        json["creator"] = "crueter";
+        json["features"] = {
+            "Modules",
+            "Reflection",
+            "OOP API"
+        };
+
+        std::println("Jacinth: {}", json.dump());
+    }
+
+    // directly dump an int
+    {
+        int hi = 67;
+        std::println("Int Dump: {}", jacinth::json::dump(hi));
+    }
+
+    // directly dump a vector
+    {
+        std::vector<float> vec = {
+            100.3,
+            678.25,
+            892349237.23,
+            -198123424,
+            -0
+        };
+
+        std::println("direct vector dump: {}", jacinth::json::dump(vec));
+    }
+
+    {
+        std::vector<std::string> vec = {
+            "Hello",
+            "Hi",
+            "Hey",
+            "Heyo",
+            "Hola",
+            "Bonjour"
+        };
+
+        std::println("direct string vector dump: {}", jacinth::json::dump(vec));
     }
 }
