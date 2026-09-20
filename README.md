@@ -245,7 +245,7 @@ for (auto a : assets.as_array()) {
 
 Also note the `get<std::string>("key")` here.
 
-If `doc["name"]` were instead assigned to a variable, `std::string name = doc["name"]` would not work, as the compiler has no way to disambiguate between conversions to `std::string_view`, `const char*`, etc. Like the above example, you could use `auto name = doc.get<std::string>("name")`, or you could use `doc["name"].get<std::string>()`. Generally speaking, this is only necessary for `std::string` or other cases where an assignment may be ambiguous.
+If `doc["name"]` were instead assigned to a variable, `std::string name = doc["name"]` would automatically convert to an `std::string`, so you wouldn't need the template operator. In the future a `std::formatter` specialization will be added for JSON types so that won't be necessary for print/format either.
 
 More docs on conversions like this will come at a later date. Fun fact in the meantime: you can interpret an entire JSON document as any type you want, and this works with `jacinth::json::dump`!
 
@@ -389,7 +389,7 @@ if (!maybe_release) {
 The `get`/`try_get` methods and the `[]` operator will always try to convert to a reasonable type, given the variable they are being assigned to. However, you can leave this as a `jacinth::value` or `jacinth::mutable_value` by assigning to an `auto` variable:
 
 ```cpp
-// these will be jacinth::values
+// these will be jacinth::value
 auto url_v = doc.get("html_url");
 auto asset_0_v = doc.get("assets")[0];
 ```
