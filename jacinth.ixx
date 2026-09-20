@@ -168,7 +168,7 @@ public:
 };
 
 // Read-only JSON tree
-class doc {
+class doc : public value {
     yyjson_doc *m_doc;
 
 public:
@@ -177,87 +177,21 @@ public:
         return doc{yyjson_read(s.data(), s.size(), 0)};
     }
 
-    explicit doc(yyjson_doc *d) noexcept : m_doc(d) {}
+    explicit doc(yyjson_doc *d) noexcept : value(d, d ? d->root : nullptr), m_doc(d) {}
 
     yyjson_doc *raw() const {
         return m_doc;
     }
 
-    // interpret the root as type T
-    template <typename T>
-    operator T() const
-    {
-        T t;
-        parseValue(m_doc->root, t);
-        return t;
-    }
-
-    // explicit conv
-    template <typename T>
-    T as() const
-    {
-        T t = operator T();
-        return t;
-    }
-
-    // dump the whole document as a JSON string
-    std::string dump(write_opts opts = {}) const
-    {
-        std::string s;
-        dump_to(s, opts);
-        return s;
-    }
-
-    // non-allocating dump into an existing string
-    void dump_to(std::string &s, write_opts opts = {}) const
-    {
-        std::size_t len = 0;
-        char *buf = m_doc ? yyjson_val_write(m_doc->root, opts.to_flags(), &len) : nullptr;
-        s.assign(buf ? buf : "", buf ? len : 0);
-        free(buf);
-    }
-
     value root() const
     {
-        return {m_doc, m_doc->root};
+        return *this;
     }
 
-    doc(doc &&o) noexcept : m_doc(std::exchange(o.m_doc, nullptr)) {}
     ~doc()
     {
         yyjson_doc_free(m_doc);
     }
-
-    // access
-    value operator[](std::string_view key) const
-    {
-        return root()[key];
-    }
-
-    value operator[](const char *key) const
-    {
-        return root()[key];
-    }
-
-    value operator[](std::size_t i) const
-    {
-        return root()[i];
-    }
-
-    // root obj testers
-    bool is_object() const
-    {
-        return yyjson_is_obj(m_doc->root);
-    }
-
-    bool is_array() const
-    {
-        return yyjson_is_arr(m_doc->root);
-    }
-
-    // iter
-    iterable_view<const_object_iterator> as_object() const;
-    iterable_view<const_array_iterator> as_array() const;
 };
 
 // A mutable JSON-ish value
@@ -819,15 +753,6 @@ inline iterable_view<const_object_iterator> value::as_object() const
 inline iterable_view<const_array_iterator> value::as_array() const
 {
     return {const_array_iterator(m_doc, m_val), const_array_iterator()};
-}
-
-inline iterable_view<const_object_iterator> doc::as_object() const
-{
-    return root().as_object();
-}
-inline iterable_view<const_array_iterator> doc::as_array() const
-{
-    return root().as_array();
 }
 
 inline iterable_view<mut_object_iterator> mutable_value::as_object()
