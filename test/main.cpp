@@ -321,4 +321,15 @@ int main()
 
         std::println("direct string vector dump: {}", jacinth::json::dump(vec));
     }
+
+    // move semantics
+    {
+        jacinth::doc a = jacinth::doc::read("{\"x\":1}");
+        {
+            jacinth::doc b = jacinth::doc::read("{\"y\":2}");
+            std::println("before: a.x={}", a["x"].as<int>());
+            a = std::move(b);
+        }
+        std::println("after:  a.y={}", a["y"].as<int>());
+    }
 }

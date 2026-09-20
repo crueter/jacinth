@@ -179,6 +179,16 @@ public:
 
     explicit doc(yyjson_doc *d) noexcept : value(d, d ? d->root : nullptr), m_doc(d) {}
 
+    doc(doc &&o) noexcept : value(o), m_doc(std::exchange(o.m_doc, nullptr)) {}
+    doc(doc const &) = delete;
+    doc &operator=(doc const &) = delete;
+    doc &operator=(doc &&o) noexcept
+    {
+        std::swap(m_doc, o.m_doc);
+        static_cast<value&>(*this) = value{m_doc, m_doc ? m_doc->root : nullptr};
+        return *this;
+    }
+
     yyjson_doc *raw() const {
         return m_doc;
     }
@@ -196,9 +206,13 @@ public:
 
 // A mutable JSON-ish value
 class mutable_value {
+protected:
     yyjson_mut_doc *m_doc;
     yyjson_mut_val *m_val;
 
+    mutable_value() = default;
+
+private:
     // force the value to be an array/obj if need be
     void ensure_object()
     {
@@ -375,15 +389,25 @@ public:
 };
 
 // Read-write JSON tree
-class json {
+class json : public mutable_value {
+    using base = mutable_value;
     yyjson_mut_doc *m_doc;
 
-    explicit json(yyjson_mut_doc *d) noexcept : m_doc(d) {}
+    explicit json(yyjson_mut_doc *d) noexcept : m_doc(d) { rebind(); }
+
+    void rebind() noexcept
+    {
+        base::m_doc = m_doc;
+        base::m_val = m_doc ? m_doc->root : nullptr;
+    }
 
 public:
+    using base::operator=;
+
     json() : m_doc(yyjson_mut_doc_new(nullptr))
     {
         yyjson_mut_doc_set_root(m_doc, yyjson_mut_null(m_doc));
+        rebind();
     }
 
     explicit json(doc const &d) : json(yyjson_doc_mut_copy(d.raw(), nullptr)) {}
@@ -391,14 +415,14 @@ public:
     template <typename T>
     json(const T &v) : json()
     {
-        operator=(v);
+        base::operator=(v);
     }
 
     // initializer-list construction
     template <typename T>
     json(std::initializer_list<T> values) : json()
     {
-        operator=(values);
+        base::operator=(values);
     }
 
     ~json()
@@ -406,33 +430,27 @@ public:
         yyjson_mut_doc_free(m_doc);
     }
 
-    json(json &&o) noexcept : m_doc(std::exchange(o.m_doc, nullptr)) {}
+    json(json &&o) noexcept : m_doc(std::exchange(o.m_doc, nullptr))
+    {
+        rebind();
+    }
     json(json const &o) : json(yyjson_mut_doc_mut_copy(o.m_doc, nullptr)) {}
     json &operator=(json &&o) noexcept
     {
         std::swap(m_doc, o.m_doc);
+        rebind();
+        o.rebind();
         return *this;
     }
 
     mutable_value root() const
     {
-        return {m_doc, m_doc->root};
+        return *this;
     }
 
-    // interpret the root as type T
-    template <typename T>
-    operator T() const
-    {
-        return root().template as<T>();
-    }
-
-    // explicit conv
-    template <typename T>
-    T as() const
-    {
-        T t = operator T();
-        return t;
-    }
+    // un-hide the inherited member dump/dump_to, shadowed by the statics below
+    using base::dump;
+    using base::dump_to;
 
     // i/o
     static json read(std::string_view s, yyjson_read_flag flg = 0)
@@ -441,24 +459,6 @@ public:
         yyjson_mut_doc *m = yyjson_doc_mut_copy(d, nullptr);
         yyjson_doc_free(d);
         return json(m);
-    }
-
-    // allocating dump
-    std::string dump(write_opts opts = {})
-    {
-        std::string s;
-        dump_to(s, opts);
-        return s;
-    }
-
-    // non-allocating dump
-    void dump_to(std::string &s, write_opts opts = {})
-    {
-        auto *root = m_doc->root;
-        std::size_t len = 0;
-        char *buf = root ? yyjson_mut_val_write(root, opts.to_flags(), &len) : nullptr;
-        s.assign(buf ? buf : "", buf ? len : 0);
-        free(buf);
     }
 
     // Write directly from an object (non-allocating)
@@ -525,88 +525,6 @@ public:
         yyjson_doc *d = yyjson_mut_doc_imut_copy(m_doc, nullptr);
         return doc(d);
     }
-
-    // access/mut ops
-    template <typename T>
-    json &operator=(const T &v)
-    {
-        writeValue(m_doc, m_doc->root, v);
-        return *this;
-    }
-
-    // initializer-list assignment
-    template <typename T>
-    json &operator=(std::initializer_list<T> values)
-    {
-        yyjson_mut_set_arr(m_doc->root);
-        for (const auto &item : values) {
-            auto *elem = yyjson_mut_null(m_doc);
-            yyjson_mut_arr_append(m_doc->root, elem);
-            writeValue(m_doc, elem, item);
-        }
-        return *this;
-    }
-
-    mutable_value operator[](std::string_view key)
-    {
-        return root()[key];
-    }
-
-    mutable_value operator[](const char *key)
-    {
-        return root()[key];
-    }
-
-    mutable_value operator[](std::size_t i)
-    {
-        return root()[i];
-    }
-
-    bool remove(std::string_view key)
-    {
-        return root().remove(key);
-    }
-
-    // TODO: ranges?
-    bool remove(std::size_t i)
-    {
-        return root().remove(i);
-    }
-
-    bool remove(std::size_t pos, std::size_t n)
-    {
-        return root().remove(pos, n);
-    }
-
-    bool clear()
-    {
-        return root().clear();
-    }
-
-    mutable_value pop_back()
-    {
-        return root().pop_back();
-    }
-
-    mutable_value pop_front()
-    {
-        return root().pop_front();
-    }
-
-    // root obj testers
-    bool is_object() const
-    {
-        return yyjson_mut_is_obj(m_doc->root);
-    }
-
-    bool is_array() const
-    {
-        return yyjson_mut_is_arr(m_doc->root);
-    }
-
-    // iter
-    iterable_view<mut_object_iterator> as_object();
-    iterable_view<mut_array_iterator> as_array();
 };
 
 // iterators
@@ -763,15 +681,6 @@ inline iterable_view<mut_object_iterator> mutable_value::as_object()
 inline iterable_view<mut_array_iterator> mutable_value::as_array()
 {
     return {mut_array_iterator(m_doc, m_val), mut_array_iterator()};
-}
-
-inline iterable_view<mut_object_iterator> json::as_object()
-{
-    return root().as_object();
-}
-inline iterable_view<mut_array_iterator> json::as_array()
-{
-    return root().as_array();
 }
 
 } // namespace jacinth
