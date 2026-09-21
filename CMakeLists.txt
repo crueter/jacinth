@@ -40,7 +40,7 @@ else()
         add_library(Boost::pfr ALIAS Boost::headers)
     elseif (NOT TARGET Boost::pfr)
         add_library(boost_pfr INTERFACE)
-        target_include_directories(boost_pfr INTERFACE pfr/include)
+        target_include_directories(boost_pfr INTERFACE externals/pfr/include)
         add_library(Boost::pfr ALIAS boost_pfr)
     endif()
 endif()
@@ -50,8 +50,8 @@ if(JACINTH_USE_SYSTEM_YYJSON)
     find_package(yyjson REQUIRED)
 else()
     add_library(yyjson OBJECT
-        yyjson/src/yyjson.h yyjson/src/yyjson.c)
-    target_include_directories(yyjson PUBLIC yyjson/src)
+        externals/yyjson/src/yyjson.h externals/yyjson/src/yyjson.c)
+    target_include_directories(yyjson PUBLIC externals/yyjson/src)
 endif()
 
 # jacinth module target
@@ -64,21 +64,17 @@ endif()
 add_library(jacinth)
 
 if (JACINTH_USE_REFLECTION)
-    set_source_files_properties(jacinth.ixx PROPERTIES
-        COMPILE_OPTIONS "$<$<COMPILE_LANGUAGE:CXX>:-freflection>"
-        COMPILE_DEFINITIONS "JACINTH_USE_REFLECTION")
-
-    target_compile_definitions(jacinth INTERFACE
+    target_compile_definitions(jacinth PUBLIC
         $<BUILD_INTERFACE:JACINTH_USE_REFLECTION>)
-    target_compile_options(jacinth INTERFACE
+    target_compile_options(jacinth PUBLIC
         $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-freflection>>)
-    target_compile_features(jacinth INTERFACE
+    target_compile_features(jacinth PUBLIC
         $<BUILD_INTERFACE:cxx_std_26>)
-
 endif()
 
 target_sources(jacinth PUBLIC
-    FILE_SET jacinth TYPE CXX_MODULES FILES jacinth.ixx)
+    FILE_SET jacinth TYPE CXX_MODULES FILES
+        modules/jacinth.ixx)
 
 target_link_libraries(jacinth PUBLIC yyjson)
 if (NOT JACINTH_USE_REFLECTION)
