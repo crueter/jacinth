@@ -158,10 +158,13 @@ int main()
 
         std::println("{}", json.dump());
 
+        // test assignment instead of copy init
+        std::string tag;
+
         // this should be a jacinth::value
         auto url_v = json.get("html_url");
         auto url = url_v.get<std::string>();
-        std::string tag = json.get("tag_name");
+        tag = json.get("tag_name");
 
         auto asset_0_v = json.get("assets").get(0);
         std::println("Asset 0: {}", asset_0_v.get<std::string>("name"));

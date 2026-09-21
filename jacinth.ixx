@@ -4,10 +4,13 @@ module;
 #include <cstdint>
 #include <cstring>
 #include <expected>
+#include <initializer_list>
 #include <map>
 #include <optional>
 #include <span>
+#include <string>
 #include <system_error>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -128,6 +131,22 @@ struct write_opts {
     }
 };
 
+// initializer-list specializations
+template <typename T>
+struct is_init_list : std::false_type {};
+
+template <typename T>
+struct is_init_list<std::initializer_list<T>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_init_list_v = is_init_list<T>::value;
+
+// exclude target types that are not meaningful JSON values (nullptr, init lists, and char *)
+// without this, assignment to an std::string or std::vector is ambiguous
+template <typename T>
+concept json_convertible = !std::is_pointer_v<T> && !std::is_same_v<T, std::nullptr_t> &&
+                           !std::is_same_v<std::remove_cv_t<T>, char> && !is_init_list_v<T>;
+
 // TODO: is_<type> funcs
 
 // An immutable JSON-ish value
@@ -168,6 +187,7 @@ public:
     }
 
     template <typename T>
+    requires json_convertible<T>
     operator T() const
     {
         T t{};
@@ -383,6 +403,7 @@ public:
     }
 
     template <typename T>
+    requires json_convertible<T>
     operator T() const
     {
         T t{};
