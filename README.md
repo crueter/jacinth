@@ -55,17 +55,19 @@ I don't know yet. It will *probably* be MIT. I want to make it LGPL, but that ha
 
 ## Performance
 
-Jacinth isn't aiming to be the fastest library out there, but it still ends up being relatively fast because yyjson itself is already one of the fastest. C++ safety features and containers do end up adding measurable overhead, but generally, Jacinth will always be around 80-90% as fast as yyjson (and *faster* than yyjson in certain on-demand parsing cases).
+Jacinth isn't aiming to be the fastest library out there, but it still ends up being very fast, as yyjson itself is already one of the fastest. In fact, in terms of read performance, Jacinth tends to serialize structs equal to or *faster* than Glaze or yyjson!
+
+Writing has lots of extra bounds and safeguards that currently slow it down, but a faster JSON serializer for structs will be written in the future.
 
 In this test, `Jacinth (Parse)` refers to parsing the JSON into DOM and extracting a single value from it. These numbers and benchmarks were created with a modified version of [Stephen Berry's JSON benchmarks](https://github.com/stephenberry/json_performance).
 
 | Library | Roundtrip Time (s) | Write (MB/s) | Read (MB/s) |
 | ------- | ------------------ | ------------ | ----------- |
-| [**Glaze**](https://github.com/stephenberry/glaze) | **0.87** | **1425** | **1653** |
-| [**simdjson (on demand)**](https://github.com/simdjson/simdjson) | **N/A** | **N/A** | **1995** |
-| [**yyjson**](https://github.com/ibireme/yyjson) | **1.09** | **1247** | **1469** |
-| [**Jacinth (Struct)**](https://github.com/crueter/jacinth) | **1.40** | **988** | **1343** |
-| [**Jacinth (Parse)**](https://github.com/crueter/jacinth) | **N/A** | **N/A** | **2133** |
+| [**Glaze**](https://github.com/stephenberry/glaze) | **0.88** | **1415** | **1583** |
+| [**Jacinth (Struct)**](https://github.com/crueter/jacinth) | **1.29** | **947** | **1624** |
+| [**Jacinth (Parse)**](https://github.com/crueter/jacinth) | **N/A** | **N/A** | **2145** |
+| [**simdjson (on demand)**](https://github.com/simdjson/simdjson) | **N/A** | **N/A** | **1991** |
+| [**yyjson**](https://github.com/ibireme/yyjson) | **1.11** | **1221** | **1416** |
 | [**reflect_cpp**](https://github.com/getml/reflect-cpp) | **2.35** | **778** | **448** |
 | [**daw_json_link**](https://github.com/beached/daw_json_link) | **2.23** | **526** | **755** |
 | [**RapidJSON**](https://github.com/Tencent/rapidjson) | **2.26** | **462** | **855** |
@@ -77,18 +79,34 @@ In the Out-Of-Sequence test, Jacinth still performs very well (~80% as fast as t
 
 | Library | Read (MB/s) |
 | ------- | ----------- |
-| [**Glaze**](https://github.com/stephenberry/glaze) | **1456** |
-| [**simdjson (on demand)**](https://github.com/simdjson/simdjson) | **134** |
-| [**Jacinth**](https://github.com/crueter/jacinth) | **1033** |
+| [**Glaze**](https://github.com/stephenberry/glaze) | **1440** |
+| [**simdjson (on demand)**](https://github.com/simdjson/simdjson) | **135** |
+| [**Jacinth**](https://github.com/crueter/jacinth) | **1035** |
 
 ### Maximizing Performance
 
 Jacinth will already be fast no matter what you do, but if you need to squeeze out as much as you possibly can, you have a few options:
 
-- Try to prefer `std::string_view`, *static-extent* `std::span`, or `std::array` in your structs if possible. This means the data will only be valid while the document object is alive, but if you only access/use the data within one scope, this is fine.
-  - It isn't possible to parse into dynamic-extent `std::span` containers, so use `std::vector` if you don't know what the size will be. If the size is a constant, static-extent `std::span` will work fine.
-- Use on-demand parsing (`doc["value"]`) if you only need a few fields from the document
-- Use the non-allocating `jacinth::json::dump_to` instead of `dump`
+- If you don't need to modify a JSON document, use `jacinth::doc`, which is usually faster
+- Use `std::string_view` in your structs if possible to avoid slow string allocations
+  - This is technically unsafe if you don't store the owning doc (as the underlying data will be freed once you exit scope).
+  - To get around this, store the doc object in the same lifecycle
+
+```cpp
+{
+  Release r;
+  auto doc = jacinth::doc::read(data);
+  d.get_to(r);
+
+  // use release fields...
+}
+
+// strings in Release are no longer valid
+```
+
+- Use on-demand parsing (`doc.get("value")`) if you only need a few fields from a large document
+- Use the non-allocating `jacinth::json::dump_to(value, out)` instead of `dump`
+- Use the non-allocating `jacinth::{doc,json}::read_to(value, data)` functions instead of `read`
 
 ## Integration
 

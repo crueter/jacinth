@@ -190,17 +190,24 @@ public:
     requires json_convertible<T>
     operator T() const
     {
-        T t{};
-        [[maybe_unused]] auto _ = parseValue(m_val, t);
-        return t;
+        return get<T>();
     }
 
     // explicit conv
     template <typename T>
     T get() const
     {
-        T t = operator T();
+        T t{};
+        get_to(t);
         return t;
+    }
+
+    // explicit conv into an existing value (non-allocating)
+    template <typename T>
+    requires json_convertible<T>
+    void get_to(T& value) const
+    {
+        [[maybe_unused]] auto _ = parseValue(m_val, value);
     }
 
     // explicit conv, with error handling
@@ -208,9 +215,20 @@ public:
     std::expected<T, std::error_code> try_get() const
     {
         T t{};
-        auto res = parseValue(m_val, t);
+        if (auto res = try_get_to(t); !res)
+            return std::unexpected(res.error());
+
+        return t;
+    }
+
+    // explicit conv into an existing value, with error handling (non-allocating)
+    template <typename T>
+    std::expected<void, std::error_code> try_get_to(T& value) const
+    {
+        auto res = parseValue(m_val, value);
         if (res == jacinth::errc::ok)
-            return t;
+            return {};
+
         return std::unexpected(jacinth::make_error_code(res));
     }
 
@@ -273,7 +291,7 @@ public:
     void dump_to(std::string &s, write_opts opts = {}) const
     {
         std::size_t len = 0;
-        char *buf = yyjson_val_write(m_val, opts.to_flags(), &len);
+        char *buf = m_val ? yyjson_val_write(m_val, opts.to_flags(), &len) : nullptr;
         s.assign(buf ? buf : "", buf ? len : 0);
         free(buf);
     }
@@ -292,6 +310,13 @@ public:
         return doc{yyjson_read(s.data(), s.size(), flg)};
     }
 
+    // read directly into an existing object (non-allocating)
+    template <typename T>
+    static void read_to(T& value, std::string_view s, yyjson_read_flag flg = 0)
+    {
+        read(s, flg).get_to(value);
+    }
+
     // read, with error handling
     static std::expected<doc, std::error_code> try_read(std::string_view s,
                                                         yyjson_read_flag flg = 0)
@@ -303,7 +328,7 @@ public:
         return doc(d);
     }
 
-    // try reading directly to parseable type
+    // try reading directly into a type
     template <typename T>
     static std::expected<T, std::error_code> try_read(std::string_view s, yyjson_read_flag flg = 0)
     {
@@ -311,6 +336,17 @@ public:
         if (!d)
             return std::unexpected(d.error());
         return d.value().template try_get<T>();
+    }
+
+    // try reading directly into an existing object (non-allocating)
+    template <typename T>
+    static std::expected<void, std::error_code> try_read_to(T& value, std::string_view s,
+                                                            yyjson_read_flag flg = 0)
+    {
+        auto d = try_read(s, flg);
+        if (!d)
+            return std::unexpected(d.error());
+        return d.value().try_get_to(value);
     }
 
     explicit doc(yyjson_doc *d) noexcept : value(d, d ? d->root : nullptr) {}
@@ -406,35 +442,57 @@ public:
     requires json_convertible<T>
     operator T() const
     {
-        T t{};
-        // parseValue can't take mutable values...
-        auto *idoc = yyjson_mut_val_imut_copy(m_val, nullptr);
-        [[maybe_unused]] auto _ = parseValue(idoc->root, t);
-        yyjson_doc_free(idoc);
-        return t;
+        return get<T>();
     }
 
     // explicit conv
     template <typename T>
     T get() const
     {
-        T t = operator T();
+        T t{};
+        get_to(t);
         return t;
+    }
+
+    // explicit conv into an existing value (non-allocating)
+    template <typename T>
+    requires json_convertible<T>
+    void get_to(T& value) const
+    {
+        if (!m_val)
+            return;
+
+        // parseValue can only take immutable docs, so parse a temporary copy
+        // TODO: other sln?
+        auto *idoc = yyjson_mut_val_imut_copy(m_val, nullptr);
+        [[maybe_unused]] auto _ = parseValue(idoc->root, value);
+        yyjson_doc_free(idoc);
     }
 
     // explicit conv, with error handling
     template <typename T>
     std::expected<T, std::error_code> try_get() const
     {
+        T t{};
+        if (auto res = try_get_to(t); !res)
+            return std::unexpected(res.error());
+
+        return t;
+    }
+
+    // explicit conv into an existing value, with error handling (non-allocating)
+    template <typename T>
+    std::expected<void, std::error_code> try_get_to(T& value) const
+    {
         if (!m_val)
             return std::unexpected(jacinth::make_error_code(jacinth::errc::missing_value));
 
-        T t{};
         auto *idoc = yyjson_mut_val_imut_copy(m_val, nullptr);
-        auto res = parseValue(idoc->root, t);
+        auto res = parseValue(idoc->root, value);
         yyjson_doc_free(idoc);
+
         if (res == jacinth::errc::ok)
-            return t;
+            return {};
 
         return std::unexpected(jacinth::make_error_code(res));
     }
@@ -655,6 +713,13 @@ public:
         return json(m);
     }
 
+    // read directly into an existing object (non-allocating)
+    template <typename T>
+    static void read_to(T& value, std::string_view s, yyjson_read_flag flg = 0)
+    {
+        read(s, flg).get_to(value);
+    }
+
     // read, with error handling
     static std::expected<json, std::error_code> try_read(std::string_view s,
                                                          yyjson_read_flag flg = 0)
@@ -669,7 +734,7 @@ public:
         return json(m);
     }
 
-    // try reading directly to parseable type
+    // try reading directly into a type
     template <typename T>
     static std::expected<T, std::error_code> try_read(std::string_view s, yyjson_read_flag flg = 0)
     {
@@ -678,6 +743,18 @@ public:
             return std::unexpected(d.error());
 
         return d.value().template try_get<T>();
+    }
+
+    // try reading directly into an existing object (non-allocating)
+    template <typename T>
+    static std::expected<void, std::error_code> try_read_to(T& value, std::string_view s,
+                                                            yyjson_read_flag flg = 0)
+    {
+        auto d = try_read(s, flg);
+        if (!d)
+            return std::unexpected(d.error());
+
+        return d.value().try_get_to(value);
     }
 
     // Write directly from an object (non-allocating)
