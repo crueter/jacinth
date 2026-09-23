@@ -1,8 +1,8 @@
 module;
 
 #include <expected>
-#include <utility>
 #include <system_error>
+#include <utility>
 
 // force yyjson to have external linkage
 #define yyjson_api_inline yyjson_inline
@@ -168,9 +168,43 @@ public:
     // non-allocating dump into an existing string
     void dump_to(std::string &s, write_opts opts = {}) const
     {
+        if (!m_val) {
+            s.clear();
+            return;
+        }
+
+        const auto flg = opts.to_flags();
+
+        // 512 byte prealloc is a reasonable sweet spot for most docs
+        std::size_t cap = s.capacity();
+        if (cap < 512)
+            cap = 512;
+
+        while (true) {
+            // write will overwrite the data anyways, just allocate
+            s.resize_and_overwrite(cap, [cap](char *, std::size_t) { return cap; });
+
+            // nonzero return means the write succeeded
+            yyjson_write_err err{};
+            if (std::size_t len = yyjson_val_write_buf(s.data(), cap, m_val, flg, &err)) {
+                s.resize(len);
+                return;
+            }
+
+            // memory alloc errors mean we just need to allocate more
+            // otherwise, or if >1mb, fall back to a direct write
+            if (err.code != YYJSON_WRITE_ERROR_MEMORY_ALLOCATION || cap >= (std::size_t{1} << 20))
+                break;
+            cap *= 2;
+        }
+
         std::size_t len = 0;
-        char *buf = m_val ? yyjson_val_write(m_val, opts.to_flags(), &len) : nullptr;
-        s.assign(buf ? buf : "", buf ? len : 0);
+        char *buf = yyjson_val_write_opts(m_val, flg, nullptr, &len, nullptr);
+        if (!buf) {
+            s.clear();
+            return;
+        }
+        s.assign(buf, len);
         free(buf);
     }
 
