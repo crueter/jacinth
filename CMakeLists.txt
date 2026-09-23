@@ -74,7 +74,12 @@ endif()
 
 target_sources(jacinth PUBLIC
     FILE_SET jacinth TYPE CXX_MODULES FILES
-        modules/jacinth.ixx)
+        modules/jacinth.ixx
+        modules/spec.ixx
+        modules/write.ixx
+        modules/read.ixx
+        modules/iter.ixx
+        modules/err.ixx)
 
 target_link_libraries(jacinth PUBLIC yyjson)
 if (NOT JACINTH_USE_REFLECTION)
