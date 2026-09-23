@@ -23,8 +23,11 @@ else()
 endif()
 
 # cxx
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+if (${CMAKE_CXX_STANDARD} LESS "23")
+    set(CMAKE_CXX_STANDARD 23)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # TODO: better control flow
