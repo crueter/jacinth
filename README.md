@@ -36,7 +36,7 @@ Jacinth is intentionally designed in a limited manner that makes it as easy to u
 - Robust error handling (for now)
 - Specialized SIMD paths
 - Support for binary or other non-JSON formats
-  - Technically, cJSON and JSON5 are supported through yyjson, but this isn't really exposed in the C++ API right now.
+  - Technically, JSONC and JSON5 are supported through yyjson, but this isn't really exposed in the C++ API right now.
 - JavaScript/Python-like array/object manipulation
   - This might be added at some point
 - `std::format` specializations (for now)
