@@ -585,45 +585,44 @@ jacinth::errc writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &fiel
     else if constexpr (std::is_aggregate_v<FieldType>) {
         yyjson_mut_set_obj(val);
         jacinth::errc result{};
+
+        auto process_field = [val, doc, &result]
+#if defined(__GNUG__) || defined(__clang__)
+            [[gnu::always_inline]]
+#elif defined(_MSC_VER)
+            [[msvc::forceinline]]
+#endif
+            (std::string_view name, auto &sub_field) {
+                if (result != jacinth::errc::ok)
+                    return;
+
+                auto *sub = yyjson_mut_null(doc);
+                auto *key = yyjson_mut_strn(doc, name.data(), name.size());
+
+                // noesc speeds up writes
+                if (unsafe_yyjson_is_str_noesc(name.data(), name.size()))
+                    unsafe_yyjson_set_tag(key, YYJSON_TYPE_STR, YYJSON_SUBTYPE_NOESC, name.size());
+
+                if (!yyjson_mut_obj_add(val, key, sub))
+                    result = jacinth::errc::write_error;
+                else
+                    result = writeValue(doc, sub, sub_field);
+            };
+
 #ifdef JACINTH_USE_REFLECTION
         template for (constexpr auto f :
                       std::define_static_array(std::meta::nonstatic_data_members_of(
                           ^^T, std::meta::access_context::current())))
         {
+            constexpr auto name = std::meta::identifier_of(f);
+            process_field(name, field.[:f:]);
             if (result != jacinth::errc::ok)
                 return result;
-
-            constexpr auto name = std::meta::identifier_of(f);
-            auto *sub = yyjson_mut_null(doc);
-            auto *key = yyjson_mut_strn(doc, name.data(), name.size());
-
-            // noesc speeds up writes
-            if (unsafe_yyjson_is_str_noesc(name.data(), name.size()))
-                unsafe_yyjson_set_tag(key, YYJSON_TYPE_STR, YYJSON_SUBTYPE_NOESC, name.size());
-
-            if (!yyjson_mut_obj_add(val, key, sub))
-                result = jacinth::errc::write_error;
-            else if (auto res = writeValue(doc, sub, field.[:f:]); res != jacinth::errc::ok)
-                result = res;
         }
 #else
-        boost::pfr::for_each_field_with_name(field, [&](std::string_view name, auto &sub_field) {
-            if (result != jacinth::errc::ok)
-                return;
-
-            auto *sub = yyjson_mut_null(doc);
-            auto *key = yyjson_mut_strn(doc, name.data(), name.size());
-
-            // noesc speeds up writes
-            if (unsafe_yyjson_is_str_noesc(name.data(), name.size()))
-                unsafe_yyjson_set_tag(key, YYJSON_TYPE_STR, YYJSON_SUBTYPE_NOESC, name.size());
-
-            if (!yyjson_mut_obj_add(val, key, sub))
-                result = jacinth::errc::write_error;
-            else
-                result = writeValue(doc, sub, sub_field);
-        });
+        boost::pfr::for_each_field_with_name(field, process_field);
 #endif
+
         return result;
     } else {
         static_assert(always_false<FieldType>, "jacinth: unsupported type for JSON serialization");

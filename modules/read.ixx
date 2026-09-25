@@ -432,32 +432,14 @@ export {
                 return jacinth::errc::type_mismatch;
 
             jacinth::errc result{};
-#ifdef JACINTH_USE_REFLECTION
-            template for (constexpr auto f :
-                          std::define_static_array(std::meta::nonstatic_data_members_of(
-                              ^^T, std::meta::access_context::current())))
-            {
-                if (result != jacinth::errc::ok)
-                    return result;
 
-                constexpr auto name = std::meta::identifier_of(f);
-                yyjson_val *sub = yyjson_obj_getn(val, name.data(), name.size());
-                using Sub = std::decay_t<decltype(field.[:f:])>;
-
-                if constexpr (is_optional_v<Sub>) {
-                    if (sub)
-                        result = parseValue(sub, field.[:f:]);
-                    else
-                        field.[:f:].reset();
-                } else if (!sub) {
-                    result = jacinth::errc::missing_value;
-                } else {
-                    result = parseValue(sub, field.[:f:]);
-                }
-            }
-#else
-            boost::pfr::for_each_field_with_name(
-                field, [val, &result](std::string_view name, auto &sub_field) {
+            auto process_field = [val, &result]
+#if defined(__GNUG__) || defined(__clang__)
+                [[gnu::always_inline]]
+#elif defined(_MSC_VER)
+                [[msvc::forceinline]]
+#endif
+                (std::string_view name, auto &sub_field) {
                     if (result != jacinth::errc::ok)
                         return;
 
@@ -474,7 +456,20 @@ export {
                     } else {
                         result = parseValue(sub, sub_field);
                     }
-                });
+                };
+
+#ifdef JACINTH_USE_REFLECTION
+            template for (constexpr auto f :
+                          std::define_static_array(std::meta::nonstatic_data_members_of(
+                              ^^T, std::meta::access_context::current())))
+            {
+                constexpr auto name = std::meta::identifier_of(f);
+                process_field(name, field.[:f:]);
+                if (result != jacinth::errc::ok)
+                    return result;
+            }
+#else
+            boost::pfr::for_each_field_with_name(field, process_field);
 #endif
             return result;
         } else {
