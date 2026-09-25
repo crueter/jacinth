@@ -546,6 +546,41 @@ jacinth::errc writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &fiel
     }
     // vectors, arrays, spans
     else if constexpr (is_vector_v<FieldType> || is_array_v<FieldType> || is_span_v<FieldType>) {
+        // num vectors can be converted very easily
+        using Elem = std::decay_t<typename FieldType::value_type>;
+        const std::size_t n = field.size();
+        yyjson_mut_val *arr = nullptr;
+
+        if (n) [[likely]] {
+            if constexpr (std::is_same_v<Elem, float>)
+                arr = yyjson_mut_arr_with_float(doc, field.data(), n);
+            if constexpr (std::is_same_v<Elem, double>)
+                arr = yyjson_mut_arr_with_double(doc, field.data(), n);
+            if constexpr (std::is_same_v<Elem, uint64_t>)
+                arr = yyjson_mut_arr_with_uint64(doc, field.data(), n);
+            if constexpr (std::is_same_v<Elem, int64_t>)
+                arr = yyjson_mut_arr_with_sint64(doc, field.data(), n);
+            if constexpr (std::is_same_v<Elem, uint32_t>)
+                arr = yyjson_mut_arr_with_uint32(doc, field.data(), n);
+            if constexpr (std::is_same_v<Elem, int32_t>)
+                arr = yyjson_mut_arr_with_sint32(doc, field.data(), n);
+            if constexpr (std::is_same_v<Elem, uint16_t>)
+                arr = yyjson_mut_arr_with_uint16(doc, field.data(), n);
+            if constexpr (std::is_same_v<Elem, int16_t>)
+                arr = yyjson_mut_arr_with_sint16(doc, field.data(), n);
+            if constexpr (std::is_same_v<Elem, uint8_t>)
+                arr = yyjson_mut_arr_with_uint8(doc, field.data(), n);
+            if constexpr (std::is_same_v<Elem, int8_t>)
+                arr = yyjson_mut_arr_with_sint8(doc, field.data(), n);
+        }
+
+        if (arr) {
+            val->tag = arr->tag;
+            val->uni = arr->uni;
+            return {};
+        }
+
+        // fallback for aggregates/vectors/etc
         yyjson_mut_set_arr(val);
         for (const auto &item : field) {
             auto *elem = yyjson_mut_null(doc);
