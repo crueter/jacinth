@@ -499,7 +499,7 @@ public:
 
 // TODO: handle variant?
 export template <typename T>
-jacinth::errc writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
+jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
 {
     if (!val)
         return jacinth::errc::missing_value;

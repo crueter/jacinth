@@ -296,7 +296,7 @@ public:
 export {
     // impls
     template <typename T>
-    [[nodiscard]] jacinth::errc parseValue(yyjson_val *val, T &field)
+    [[nodiscard]] inline jacinth::errc parseValue(yyjson_val *val, T &field)
     {
         using FieldType = std::decay_t<T>;
 
