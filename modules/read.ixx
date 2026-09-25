@@ -317,23 +317,23 @@ export {
             return jacinth::errc::missing_value;
 
         if constexpr (std::is_same_v<FieldType, std::string>) {
-            if (!yyjson_is_str(val))
+            if (!yyjson_is_str(val)) [[unlikely]]
                 return jacinth::errc::type_mismatch;
             field.assign(yyjson_get_str(val), yyjson_get_len(val));
         } else if constexpr (std::is_same_v<FieldType, std::string_view>) {
-            if (!yyjson_is_str(val))
+            if (!yyjson_is_str(val)) [[unlikely]]
                 return jacinth::errc::type_mismatch;
             field = {yyjson_get_str(val), yyjson_get_len(val)};
         } else if constexpr (std::is_floating_point_v<FieldType>) {
-            if (!yyjson_is_num(val))
+            if (!yyjson_is_num(val)) [[unlikely]]
                 return jacinth::errc::type_mismatch;
             field = FieldType(yyjson_get_num(val));
         } else if constexpr (std::is_same_v<FieldType, bool>) {
-            if (!yyjson_is_bool(val))
+            if (!yyjson_is_bool(val)) [[unlikely]]
                 return jacinth::errc::type_mismatch;
             field = yyjson_get_bool(val);
         } else if constexpr (std::is_integral_v<FieldType>) {
-            if (yyjson_is_uint(val))
+            if (yyjson_is_uint(val)) [[unlikely]]
                 field = FieldType(yyjson_get_uint(val));
             else if (yyjson_is_int(val))
                 field = FieldType(yyjson_get_int(val));
@@ -349,12 +349,12 @@ export {
             else if (yyjson_is_int(val))
                 field =
                     static_cast<FieldType>(WideType(static_cast<WideType>(yyjson_get_int(val))));
-            else
+            else [[unlikely]]
                 return jacinth::errc::type_mismatch;
         }
         // vectors
         else if constexpr (is_vector_v<FieldType>) {
-            if (!yyjson_is_arr(val))
+            if (!yyjson_is_arr(val)) [[unlikely]]
                 return jacinth::errc::type_mismatch;
             field.resize(yyjson_arr_size(val));
 
@@ -368,7 +368,7 @@ export {
         }
         // fixed-size std::array
         else if constexpr (is_array_v<FieldType>) {
-            if (!yyjson_is_arr(val))
+            if (!yyjson_is_arr(val)) [[unlikely]]
                 return jacinth::errc::type_mismatch;
             static constexpr const size_t N = std::tuple_size_v<FieldType>;
 
@@ -387,7 +387,7 @@ export {
             if constexpr (FieldType::extent == std::dynamic_extent) {
                 static_assert(always_false<FieldType>,
                               "jacinth: cannot parse into a dynamically-sized std::span");
-            } else if (!yyjson_is_arr(val))
+            } else if (!yyjson_is_arr(val)) [[unlikely]]
                 return jacinth::errc::type_mismatch;
             static constexpr const size_t N = FieldType::extent;
 
@@ -403,8 +403,7 @@ export {
         }
         // maps
         else if constexpr (is_map_v<FieldType>) {
-            // TODO(crueter): Really need better err handling
-            if (!yyjson_is_obj(val))
+            if (!yyjson_is_obj(val)) [[unlikely]]
                 return jacinth::errc::type_mismatch;
 
             using MappedType = typename FieldType::mapped_type;
@@ -429,7 +428,7 @@ export {
         }
         // nested structs, etc.
         else if constexpr (std::is_aggregate_v<FieldType>) {
-            if (!yyjson_is_obj(val))
+            if (!yyjson_is_obj(val)) [[unlikely]]
                 return jacinth::errc::type_mismatch;
 
             jacinth::errc result{};
