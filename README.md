@@ -56,16 +56,16 @@ I don't know yet. It will *probably* be MIT. I want to make it LGPL, but that ha
 
 Jacinth isn't aiming to be the fastest library out there, but it still ends up being very fast, as yyjson itself is already one of the fastest. In fact, in terms of read performance, Jacinth tends to serialize structs equal to or *faster* than Glaze or yyjson!
 
-Writing has lots of extra bounds and safeguards that currently slow it down, but a faster JSON serializer for structs will be written in the future.
+Writing will generally be on par with yyjson, but slower than Glaze since Jacinth currently lacks a dedicated fast struct writer like Glaze has.
 
 In this test, `Jacinth (Parse)` refers to parsing the JSON into DOM and extracting a single value from it. These numbers and benchmarks were created with a modified version of [Stephen Berry's JSON benchmarks](https://github.com/stephenberry/json_performance).
 
 | Library | Roundtrip Time (s) | Write (MB/s) | Read (MB/s) |
-| [**Glaze**](https://github.com/stephenberry/glaze) | **0.85** | **1455** | **1606** |
-| [**Jacinth (Struct)**](https://github.com/crueter/jacinth) | **1.04** | **1143** | **1719** |
-| [**Jacinth (Parse)**](https://github.com/crueter/jacinth) | **N/A** | **N/A** | **2151** |
-| [**simdjson (on demand)**](https://github.com/simdjson/simdjson) | **N/A** | **N/A** | **1795** |
-| [**yyjson**](https://github.com/ibireme/yyjson) | **1.10** | **1189** | **1494** |
+| [**Glaze**](https://github.com/stephenberry/glaze) | **0.86** | **1464** | **1565** |
+| [**Jacinth (Struct)**](https://github.com/crueter/jacinth) | **1.00** | **1204** | **1786** |
+| [**Jacinth (Parse)**](https://github.com/crueter/jacinth) | **N/A** | **N/A** | **2071** |
+| [**simdjson (on demand)**](https://github.com/simdjson/simdjson) | **N/A** | **N/A** | **1909** |
+| [**yyjson**](https://github.com/ibireme/yyjson) | **1.08** | **1241** | **1484** |
 | [**reflect_cpp**](https://github.com/getml/reflect-cpp) | **2.35** | **778** | **448** |
 | [**daw_json_link**](https://github.com/beached/daw_json_link) | **2.23** | **526** | **755** |
 | [**RapidJSON**](https://github.com/Tencent/rapidjson) | **2.26** | **462** | **855** |
@@ -73,7 +73,7 @@ In this test, `Jacinth (Parse)` refers to parsing the JSON into DOM and extracti
 | [**Boost.JSON**](https://boost.org/libs/json) | **3.98** | **283** | **436** |
 | [**nlohmann**](https://github.com/nlohmann/json) | **10.14** | **150** | **111** |
 
-In the Out-Of-Sequence test, Jacinth does see a performance penalty, but still reads very fast, unlike simdjson:
+In the Out-Of-Sequence test, Jacinth does see a performance penalty, but still reads very fast, unlike simdjson; keys don't necessarily need to be in the same order as the struct:
 
 | Library | Read (MB/s) |
 | ------- | ----------- |

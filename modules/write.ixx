@@ -554,23 +554,23 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
         if (n) [[likely]] {
             if constexpr (std::is_same_v<Elem, float>)
                 arr = yyjson_mut_arr_with_float(doc, field.data(), n);
-            if constexpr (std::is_same_v<Elem, double>)
+            else if constexpr (std::is_same_v<Elem, double>)
                 arr = yyjson_mut_arr_with_double(doc, field.data(), n);
-            if constexpr (std::is_same_v<Elem, uint64_t>)
+            else if constexpr (std::is_same_v<Elem, uint64_t>)
                 arr = yyjson_mut_arr_with_uint64(doc, field.data(), n);
-            if constexpr (std::is_same_v<Elem, int64_t>)
+            else if constexpr (std::is_same_v<Elem, int64_t>)
                 arr = yyjson_mut_arr_with_sint64(doc, field.data(), n);
-            if constexpr (std::is_same_v<Elem, uint32_t>)
+            else if constexpr (std::is_same_v<Elem, uint32_t>)
                 arr = yyjson_mut_arr_with_uint32(doc, field.data(), n);
-            if constexpr (std::is_same_v<Elem, int32_t>)
+            else if constexpr (std::is_same_v<Elem, int32_t>)
                 arr = yyjson_mut_arr_with_sint32(doc, field.data(), n);
-            if constexpr (std::is_same_v<Elem, uint16_t>)
+            else if constexpr (std::is_same_v<Elem, uint16_t>)
                 arr = yyjson_mut_arr_with_uint16(doc, field.data(), n);
-            if constexpr (std::is_same_v<Elem, int16_t>)
+            else if constexpr (std::is_same_v<Elem, int16_t>)
                 arr = yyjson_mut_arr_with_sint16(doc, field.data(), n);
-            if constexpr (std::is_same_v<Elem, uint8_t>)
+            else if constexpr (std::is_same_v<Elem, uint8_t>)
                 arr = yyjson_mut_arr_with_uint8(doc, field.data(), n);
-            if constexpr (std::is_same_v<Elem, int8_t>)
+            else if constexpr (std::is_same_v<Elem, int8_t>)
                 arr = yyjson_mut_arr_with_sint8(doc, field.data(), n);
         }
 
@@ -627,9 +627,32 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
 #elif defined(_MSC_VER)
             [[msvc::forceinline]]
 #endif
-            (std::string_view name, auto &sub_field) {
+            (std::string_view name, auto &value) {
                 if (result != jacinth::errc::ok)
                     return;
+
+                using Elem = std::decay_t<decltype(value)>;
+
+                std::optional<bool> res;
+                if constexpr (std::is_same_v<Elem, float>)
+                    res = yyjson_mut_obj_add_float(doc, val, name.data(), float(value));
+                else if constexpr (std::is_same_v<Elem, double>)
+                    res = yyjson_mut_obj_add_double(doc, val, name.data(), double(value));
+                else if constexpr (std::is_same_v<Elem, bool>)
+                    res = yyjson_mut_obj_add_bool(doc, val, name.data(), bool(value));
+                else if constexpr (std::is_integral_v<Elem> && std::is_unsigned_v<Elem>)
+                    res = yyjson_mut_obj_add_uint(doc, val, name.data(), uint64_t(value));
+                else if constexpr (std::is_integral_v<Elem>)
+                    res = yyjson_mut_obj_add_sint(doc, val, name.data(), int64_t(value));
+                else if constexpr (std::is_same_v<Elem, std::string>)
+                    res = yyjson_mut_obj_add_strncpy(doc, val, name.data(), value.data(), value.size());
+                else if constexpr (std::is_same_v<Elem, std::string_view>)
+                    res = yyjson_mut_obj_add_strn(doc, val, name.data(), value.data(), value.size());
+
+                if (res) {
+                    result = res.value() ? jacinth::errc::ok : jacinth::errc::write_error;
+                    return;
+                }
 
                 auto *sub = yyjson_mut_null(doc);
                 auto *key = yyjson_mut_strn(doc, name.data(), name.size());
@@ -641,7 +664,7 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
                 if (!yyjson_mut_obj_add(val, key, sub))
                     result = jacinth::errc::write_error;
                 else
-                    result = writeValue(doc, sub, sub_field);
+                    result = writeValue(doc, sub, value);
             };
 
 #ifdef JACINTH_USE_REFLECTION
