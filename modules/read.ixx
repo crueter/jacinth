@@ -433,7 +433,11 @@ export {
 
             jacinth::errc result{};
 
-            auto process_field = [val, &result]
+            yyjson_obj_iter it;
+            yyjson_obj_iter_init(val, &it);
+            yyjson_val *cur = yyjson_obj_iter_next(&it);
+
+            auto process_field = [val, &it, &cur, &result]
 #if defined(__GNUG__) || defined(__clang__)
                 [[gnu::always_inline]]
 #elif defined(_MSC_VER)
@@ -443,7 +447,17 @@ export {
                     if (result != jacinth::errc::ok)
                         return;
 
-                    yyjson_val *sub = yyjson_obj_getn(val, name.data(), name.size());
+                    yyjson_val *sub;
+
+                    // in-order structs are o(n) instead of o(n*m)
+                    if (cur && unsafe_yyjson_equals_strn(cur, name.data(), name.size())) {
+                        sub = yyjson_obj_iter_get_val(cur);
+                        cur = yyjson_obj_iter_next(&it);
+                    } else {
+                        cur = nullptr;
+                        sub = yyjson_obj_getn(val, name.data(), name.size());
+                    }
+
                     using Sub = std::decay_t<decltype(sub_field)>;
 
                     if constexpr (is_optional_v<Sub>) {

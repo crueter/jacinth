@@ -61,12 +61,11 @@ Writing has lots of extra bounds and safeguards that currently slow it down, but
 In this test, `Jacinth (Parse)` refers to parsing the JSON into DOM and extracting a single value from it. These numbers and benchmarks were created with a modified version of [Stephen Berry's JSON benchmarks](https://github.com/stephenberry/json_performance).
 
 | Library | Roundtrip Time (s) | Write (MB/s) | Read (MB/s) |
-| ------- | ------------------ | ------------ | ----------- |
-| [**Glaze**](https://github.com/stephenberry/glaze) | **0.85** | **1449** | **1609** |
-| [**Jacinth (Struct)**](https://github.com/crueter/jacinth) | **1.06** | **1147** | **1622** |
-| [**Jacinth (Parse)**](https://github.com/crueter/jacinth) | **N/A** | **N/A** | **2161** |
-| [**simdjson (on demand)**](https://github.com/simdjson/simdjson) | **N/A** | **N/A** | **1996** |
-| [**yyjson**](https://github.com/ibireme/yyjson) | **1.09** | **1237** | **1486** |
+| [**Glaze**](https://github.com/stephenberry/glaze) | **0.85** | **1455** | **1606** |
+| [**Jacinth (Struct)**](https://github.com/crueter/jacinth) | **1.04** | **1143** | **1719** |
+| [**Jacinth (Parse)**](https://github.com/crueter/jacinth) | **N/A** | **N/A** | **2151** |
+| [**simdjson (on demand)**](https://github.com/simdjson/simdjson) | **N/A** | **N/A** | **1795** |
+| [**yyjson**](https://github.com/ibireme/yyjson) | **1.10** | **1189** | **1494** |
 | [**reflect_cpp**](https://github.com/getml/reflect-cpp) | **2.35** | **778** | **448** |
 | [**daw_json_link**](https://github.com/beached/daw_json_link) | **2.23** | **526** | **755** |
 | [**RapidJSON**](https://github.com/Tencent/rapidjson) | **2.26** | **462** | **855** |
