@@ -60,6 +60,7 @@ Writing will generally be on par with yyjson, but slower than Glaze since Jacint
 In this test, `Jacinth (Parse)` refers to parsing the JSON into DOM and extracting a single value from it. These numbers and benchmarks were created with a modified version of [Stephen Berry's JSON benchmarks](https://github.com/stephenberry/json_performance).
 
 | Library | Roundtrip Time (s) | Write (MB/s) | Read (MB/s) |
+| ------- | ------------------ | ------------ | ----------- |
 | [**Glaze**](https://github.com/stephenberry/glaze) | **0.86** | **1464** | **1565** |
 | [**Jacinth (Struct)**](https://github.com/crueter/jacinth) | **1.00** | **1204** | **1786** |
 | [**Jacinth (Parse)**](https://github.com/crueter/jacinth) | **N/A** | **N/A** | **2071** |
