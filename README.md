@@ -43,8 +43,7 @@ Jacinth is intentionally designed in a limited manner that makes it as easy to u
   - For the time being you can just `jacinth::json::dump`
 - Absolutely *zero* overhead
   - Jacinth's safety semantics, error handling, and other goodies generally make this impossible.
-  - However, Jacinth is still plenty fast, usually between 80-90% of yyjson. See [#Performance](#performance).
-  - Generally, parse/read is nearly as fast as yyjson, but writing is usually around 20% slower due to memory safety shenanigans.
+  - However, Jacinth is still plenty fast; writing is slightly slower, but reading is *faster* than yyjson! See [#Performance](#performance).
 - Singular API pattern
   - Jacinth intentionally implements several different API surfaces and patterns so you can choose which way works best. It's generally designed such that it can serve as a near drop-in replacement for nlohmann, while adding extra features to make your life even easier.
 
