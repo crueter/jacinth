@@ -36,7 +36,7 @@ if (JACINTH_USE_REFLECTION)
 else()
     # pfr
     if(JACINTH_USE_SYSTEM_PFR)
-        find_package(Boost REQUIRED COMPONENTS headers)
+        find_package(Boost 1.87 REQUIRED COMPONENTS headers)
     endif()
 
     if (TARGET Boost::headers AND NOT TARGET Boost::pfr)
