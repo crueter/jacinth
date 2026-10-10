@@ -2,6 +2,7 @@
 module;
 
 #include <system_error>
+#include <string>
 
 export module jacinth:err;
 
@@ -22,27 +23,9 @@ export {
     {
 
     class error : public std::error_category {
-        const char *name() const noexcept override
-        {
-            return "jacinth";
-        }
-
-        std::string message(int c) const override
-        {
-            switch (errc(c)) {
-            [[unlikely]] case errc::ok:
-                return "jacinth: OK";
-            case errc::invalid_json:
-                return "jacinth: JSON text failed to parse";
-            case errc::type_mismatch:
-                return "jacinth: type mismatch while parsing value";
-            case errc::missing_value:
-                return "jacinth: required value is missing";
-            case errc::write_error:
-                return "jacinth: JSON write error";
-            }
-            return "jacinth: unknown error";
-        }
+    public:
+        const char *name() const noexcept override;
+        std::string message(int c) const override;
     };
 
     inline const std::error_category &jacinth_category() noexcept
@@ -63,3 +46,28 @@ export {
     template <>
     struct std::is_error_code_enum<jacinth::errc> : std::true_type {};
 }
+
+namespace jacinth::detail
+{
+const char *error::name() const noexcept
+{
+    return "jacinth";
+}
+
+std::string error::message(int c) const
+{
+    switch (errc(c)) {
+    [[unlikely]] case errc::ok:
+        return "jacinth: OK";
+    case errc::invalid_json:
+        return "jacinth: JSON text failed to parse";
+    case errc::type_mismatch:
+        return "jacinth: type mismatch while parsing value";
+    case errc::missing_value:
+        return "jacinth: required value is missing";
+    case errc::write_error:
+        return "jacinth: JSON write error";
+    }
+    return "jacinth: unknown error";
+}
+} // namespace jacinth::detail
