@@ -3,6 +3,7 @@ module;
 #include <expected>
 #include <system_error>
 #include <utility>
+#include <span>
 
 // force yyjson to have external linkage
 #define yyjson_api_inline yyjson_inline
