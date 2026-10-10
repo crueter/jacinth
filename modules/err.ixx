@@ -1,8 +1,8 @@
 // std::error_code, enum, etc. for error handling
 module;
 
-#include <system_error>
 #include <string>
+#include <system_error>
 
 export module jacinth:err;
 
@@ -28,9 +28,10 @@ export {
         std::string message(int c) const override;
     };
 
+    inline const detail::error cat{};
+
     inline const std::error_category &jacinth_category() noexcept
     {
-        static const detail::error cat;
         return cat;
     }
 
