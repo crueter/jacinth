@@ -83,9 +83,9 @@ public:
     // explicit conv into an existing value (non-allocating)
     template <typename T>
         requires json_convertible<T>
-    void get_to(T &value) const
+    void get_to(T &val) const
     {
-        [[maybe_unused]] auto _ = parseValue(m_val, value);
+        [[maybe_unused]] auto _ = parseValue(m_val, val);
     }
 
     // explicit conv, with error handling
@@ -101,9 +101,9 @@ public:
 
     // explicit conv into an existing value, with error handling (non-allocating)
     template <typename T>
-    std::expected<void, std::error_code> try_get_to(T &value) const
+    std::expected<void, std::error_code> try_get_to(T &val) const
     {
-        auto res = parseValue(m_val, value);
+        auto res = parseValue(m_val, val);
         if (res == jacinth::errc::ok)
             return {};
 
