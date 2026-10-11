@@ -28,3 +28,12 @@ endif()
 set_target_properties(jacinth::jacinth PROPERTIES
   IMPORTED_CXX_MODULES_LINK_LIBRARIES "${link}"
   INTERFACE_LINK_LIBRARIES "${link}")
+
+# ccache and sccache do not play very nicely with modules
+# This will be removed eventually
+get_target_property(launcher jacinth::jacinth CXX_COMPILER_LAUNCHER)
+if ("${launcher}" MATCHES "ccache")
+    set_target_properties(jacinth::jacinth PROPERTIES
+        CXX_COMPILER_LAUNCHER ""
+        C_COMPILER_LAUNCHER "")
+endif()

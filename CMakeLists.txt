@@ -96,6 +96,15 @@ endif()
 
 add_library(jacinth::jacinth ALIAS jacinth)
 
+# ccache and sccache do not play very nicely with modules
+# This will be removed eventually
+get_target_property(launcher jacinth CXX_COMPILER_LAUNCHER)
+if ("${launcher}" MATCHES "ccache")
+    set_target_properties(jacinth PROPERTIES
+        CXX_COMPILER_LAUNCHER ""
+        C_COMPILER_LAUNCHER "")
+endif()
+
 if (JACINTH_INSTALL)
     include(GNUInstallDirs)
     install(TARGETS jacinth
