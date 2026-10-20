@@ -2,6 +2,7 @@ module;
 
 #include <expected>
 #include <system_error>
+#include <type_traits>
 #include <utility>
 #include <span>
 
@@ -353,53 +354,62 @@ export {
             else [[unlikely]]
                 return jacinth::errc::type_mismatch;
         }
-        // vectors
-        else if constexpr (is_vector_v<FieldType>) {
-            if (!yyjson_is_arr(val)) [[unlikely]]
-                return jacinth::errc::type_mismatch;
-            field.resize(yyjson_arr_size(val));
-
-            size_t idx, max;
-            yyjson_val *elem;
-            yyjson_arr_foreach(val, idx, max, elem)
-            {
-                if (auto res = parseValue(elem, field[idx]); res != jacinth::errc::ok)
-                    return res;
-            }
-        }
-        // fixed-size std::array
-        else if constexpr (is_array_v<FieldType>) {
-            if (!yyjson_is_arr(val)) [[unlikely]]
-                return jacinth::errc::type_mismatch;
-            static constexpr const size_t N = std::tuple_size_v<FieldType>;
-
-            size_t idx, max;
-            yyjson_val *elem;
-            yyjson_arr_foreach(val, idx, max, elem)
-            {
-                if (idx >= N)
-                    break;
-                if (auto res = parseValue(elem, field[idx]); res != jacinth::errc::ok)
-                    return res;
-            }
-        }
-        // static-extent std::span
-        else if constexpr (is_span_v<FieldType>) {
-            if constexpr (FieldType::extent == std::dynamic_extent) {
-                static_assert(always_false<FieldType>,
+        // vector, array, static span
+        else if constexpr (is_vector_v<FieldType> || is_array_v<FieldType> ||
+                           is_span_v<FieldType>) {
+            if constexpr (is_span_v<FieldType>)
+                static_assert(FieldType::extent != std::dynamic_extent,
                               "jacinth: cannot parse into a dynamically-sized std::span");
-            } else if (!yyjson_is_arr(val)) [[unlikely]]
-                return jacinth::errc::type_mismatch;
-            static constexpr const size_t N = FieldType::extent;
 
-            size_t idx, max;
-            yyjson_val *elem;
-            yyjson_arr_foreach(val, idx, max, elem)
-            {
-                if (idx >= N)
-                    break;
-                if (auto res = parseValue(elem, field[idx]); res != jacinth::errc::ok)
-                    return res;
+            if (!yyjson_is_arr(val)) [[unlikely]]
+                return jacinth::errc::type_mismatch;
+
+            // vectors grow, spans/arrays have a size cap
+            const size_t count = yyjson_arr_size(val);
+            size_t limit;
+            if constexpr (is_vector_v<FieldType>) {
+                field.resize(count);
+                limit = count;
+            } else if constexpr (is_array_v<FieldType>) {
+                constexpr size_t N = std::tuple_size_v<FieldType>;
+                limit = count < N ? count : N;
+            } else {
+                constexpr size_t N = FieldType::extent;
+                limit = count < N ? count : N;
+            }
+
+            using Elem = std::decay_t<typename FieldType::value_type>;
+
+            if constexpr (std::is_arithmetic_v<Elem> && !std::is_same_v<Elem, bool>) {
+                yyjson_val *elem = yyjson_arr_get_first(val);
+                for (size_t i = 0; i < limit; ++i, ++elem) {
+                    if constexpr (std::is_floating_point_v<Elem>) {
+                        // floats accept any numeric element
+                        if (yyjson_is_real(elem))
+                            field[i] = Elem(elem->uni.f64);
+                        else if (yyjson_is_uint(elem))
+                            field[i] = Elem(elem->uni.u64);
+                        else if (yyjson_is_int(elem))
+                            field[i] = Elem(elem->uni.i64);
+                        else [[unlikely]]
+                            return jacinth::errc::type_mismatch;
+                    } else {
+                        if (yyjson_is_int(elem))
+                            field[i] = Elem(elem->uni.i64);
+                        else [[unlikely]]
+                            return jacinth::errc::type_mismatch;
+                    }
+                }
+            } else {
+                size_t idx, max;
+                yyjson_val *elem;
+                yyjson_arr_foreach(val, idx, max, elem)
+                {
+                    if (idx >= limit)
+                        break;
+                    if (auto res = parseValue(elem, field[idx]); res != jacinth::errc::ok)
+                        return res;
+                }
             }
         }
         // maps

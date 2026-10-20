@@ -61,11 +61,11 @@ In this test, `Jacinth (Parse)` refers to parsing the JSON into DOM and extracti
 
 | Library | Roundtrip Time (s) | Write (MB/s) | Read (MB/s) |
 | ------- | ------------------ | ------------ | ----------- |
-| [**Glaze**](https://github.com/stephenberry/glaze) | **0.86** | **1464** | **1565** |
-| [**Jacinth (Struct)**](https://github.com/crueter/jacinth) | **1.00** | **1204** | **1786** |
-| [**Jacinth (Parse)**](https://github.com/crueter/jacinth) | **N/A** | **N/A** | **2071** |
-| [**simdjson (on demand)**](https://github.com/simdjson/simdjson) | **N/A** | **N/A** | **1909** |
-| [**yyjson**](https://github.com/ibireme/yyjson) | **1.08** | **1241** | **1484** |
+| [**Glaze**](https://github.com/stephenberry/glaze) | **0.90** | **1421** | **1562** |
+| [**Jacinth (Struct)**](https://github.com/crueter/jacinth) | **1.02** | **1188** | **1773** |
+| [**Jacinth (Parse)**](https://github.com/crueter/jacinth) | **N/A** | **N/A** | **2125** |
+| [**simdjson (on demand)**](https://github.com/simdjson/simdjson) | **N/A** | **N/A** | **1962** |
+| [**yyjson**](https://github.com/ibireme/yyjson) | **1.10** | **1203** | **1460** |
 | [**reflect_cpp**](https://github.com/getml/reflect-cpp) | **2.35** | **778** | **448** |
 | [**daw_json_link**](https://github.com/beached/daw_json_link) | **2.23** | **526** | **755** |
 | [**RapidJSON**](https://github.com/Tencent/rapidjson) | **2.26** | **462** | **855** |
@@ -77,9 +77,9 @@ In the Out-Of-Sequence test, Jacinth does see a performance penalty, but still r
 
 | Library | Read (MB/s) |
 | ------- | ----------- |
-| [**Glaze**](https://github.com/stephenberry/glaze) | **1440** |
-| [**simdjson (on demand)**](https://github.com/simdjson/simdjson) | **135** |
-| [**Jacinth**](https://github.com/crueter/jacinth) | **1035** |
+| [**Glaze**](https://github.com/stephenberry/glaze) | **1472** |
+| [**simdjson (on demand)**](https://github.com/simdjson/simdjson) | **127** |
+| [**Jacinth**](https://github.com/crueter/jacinth) | **1120** |
 
 ### Maximizing Performance
 
