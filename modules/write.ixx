@@ -382,8 +382,6 @@ public:
     using base::dump;
     using base::dump_to;
 
-    // TODO: non-alloc methods
-
     // i/o
     static json read(std::string_view s, yyjson_read_flag flg = 0)
     {
@@ -520,7 +518,9 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
         } else {
             return jacinth::errc::write_error;
         }
-    } else if constexpr (std::is_same_v<FieldType, char *> ||
+    }
+
+    else if constexpr (std::is_same_v<FieldType, char *> ||
                          std::is_same_v<FieldType, const char *>) {
         if (yyjson_mut_val *str = yyjson_mut_strcpy(doc, field); str) {
             val->tag = str->tag;
@@ -528,19 +528,26 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
         } else {
             return jacinth::errc::write_error;
         }
-    } else if constexpr (std::is_floating_point_v<FieldType>) {
+    }
+
+    else if constexpr (std::is_floating_point_v<FieldType>) {
         if constexpr (std::is_same_v<FieldType, float>)
             yyjson_mut_set_float(val, float(field));
         else
             yyjson_mut_set_double(val, double(field));
-    } else if constexpr (std::is_same_v<FieldType, bool>) {
+    }
+
+    else if constexpr (std::is_same_v<FieldType, bool>) {
         yyjson_mut_set_bool(val, field);
-    } else if constexpr (std::is_integral_v<FieldType>) {
+    }
+
+    else if constexpr (std::is_integral_v<FieldType>) {
         if constexpr (std::is_unsigned_v<FieldType>)
             yyjson_mut_set_uint(val, uint64_t(field));
         else
             yyjson_mut_set_int(val, int64_t(field));
     }
+
     // enums are serialized as their underlying type
     else if constexpr (std::is_enum_v<FieldType>) {
         using UnderlyingType = std::underlying_type_t<FieldType>;
@@ -549,6 +556,7 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
         else
             yyjson_mut_set_int(val, int64_t(static_cast<UnderlyingType>(field)));
     }
+
     // vectors, arrays, spans
     else if constexpr (is_vector_v<FieldType> || is_array_v<FieldType> || is_span_v<FieldType>) {
         // num vectors can be converted very easily
@@ -556,25 +564,35 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
         const std::size_t n = field.size();
         yyjson_mut_val *arr = nullptr;
 
+        // FIXME spaghetti
         if (n) [[likely]] {
             if constexpr (std::is_same_v<Elem, float>)
                 arr = yyjson_mut_arr_with_float(doc, field.data(), n);
+
             else if constexpr (std::is_same_v<Elem, double>)
                 arr = yyjson_mut_arr_with_double(doc, field.data(), n);
+
             else if constexpr (std::is_same_v<Elem, uint64_t>)
                 arr = yyjson_mut_arr_with_uint64(doc, field.data(), n);
+
             else if constexpr (std::is_same_v<Elem, int64_t>)
                 arr = yyjson_mut_arr_with_sint64(doc, field.data(), n);
+
             else if constexpr (std::is_same_v<Elem, uint32_t>)
                 arr = yyjson_mut_arr_with_uint32(doc, field.data(), n);
+
             else if constexpr (std::is_same_v<Elem, int32_t>)
                 arr = yyjson_mut_arr_with_sint32(doc, field.data(), n);
+
             else if constexpr (std::is_same_v<Elem, uint16_t>)
                 arr = yyjson_mut_arr_with_uint16(doc, field.data(), n);
+
             else if constexpr (std::is_same_v<Elem, int16_t>)
                 arr = yyjson_mut_arr_with_sint16(doc, field.data(), n);
+
             else if constexpr (std::is_same_v<Elem, uint8_t>)
                 arr = yyjson_mut_arr_with_uint8(doc, field.data(), n);
+
             else if constexpr (std::is_same_v<Elem, int8_t>)
                 arr = yyjson_mut_arr_with_sint8(doc, field.data(), n);
         }
@@ -596,6 +614,7 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
                 return res;
         }
     }
+
     // optionals
     else if constexpr (is_optional_v<FieldType>) {
         if (field.has_value()) {
@@ -604,6 +623,7 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
         } else
             yyjson_mut_set_null(val);
     }
+
     // maps
     else if constexpr (is_map_v<FieldType>) {
         yyjson_mut_set_obj(val);
@@ -617,10 +637,12 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
                 return res;
         }
     }
+
     // to_json ADL
     else if constexpr (requires { to_json(jacinth::mutable_value{nullptr, nullptr}, field); }) {
         to_json(jacinth::mutable_value{doc, val}, field);
     }
+
     // nested structs, etc
     else if constexpr (std::is_aggregate_v<FieldType>) {
         yyjson_mut_set_obj(val);
@@ -645,20 +667,27 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
                 constexpr auto name = field_plan.key;
                 using Elem = std::decay_t<decltype(value)>;
 
+                // FIXME spaghetti
                 std::optional<bool> res;
                 if constexpr (std::is_same_v<Elem, float>)
                     res = yyjson_mut_obj_add_float(doc, val, name.data(), float(value));
+
                 else if constexpr (std::is_same_v<Elem, double>)
                     res = yyjson_mut_obj_add_double(doc, val, name.data(), double(value));
+
                 else if constexpr (std::is_same_v<Elem, bool>)
                     res = yyjson_mut_obj_add_bool(doc, val, name.data(), bool(value));
+
                 else if constexpr (std::is_integral_v<Elem> && std::is_unsigned_v<Elem>)
                     res = yyjson_mut_obj_add_uint(doc, val, name.data(), uint64_t(value));
+
                 else if constexpr (std::is_integral_v<Elem>)
                     res = yyjson_mut_obj_add_sint(doc, val, name.data(), int64_t(value));
+
                 else if constexpr (std::is_same_v<Elem, std::string>)
                     res = yyjson_mut_obj_add_strncpy(doc, val, name.data(), value.data(),
                                                      value.size());
+
                 else if constexpr (std::is_same_v<Elem, std::string_view>)
                     res =
                         yyjson_mut_obj_add_strn(doc, val, name.data(), value.data(), value.size());

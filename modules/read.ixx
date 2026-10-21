@@ -326,20 +326,32 @@ export {
         if constexpr (std::is_same_v<FieldType, std::string>) {
             if (!yyjson_is_str(val)) [[unlikely]]
                 return jacinth::errc::type_mismatch;
+
             field.assign(yyjson_get_str(val), yyjson_get_len(val));
-        } else if constexpr (std::is_same_v<FieldType, std::string_view>) {
+        }
+
+        else if constexpr (std::is_same_v<FieldType, std::string_view>) {
             if (!yyjson_is_str(val)) [[unlikely]]
                 return jacinth::errc::type_mismatch;
+
             field = {yyjson_get_str(val), yyjson_get_len(val)};
-        } else if constexpr (std::is_floating_point_v<FieldType>) {
+        }
+
+        else if constexpr (std::is_floating_point_v<FieldType>) {
             if (!yyjson_is_num(val)) [[unlikely]]
                 return jacinth::errc::type_mismatch;
+
             field = FieldType(yyjson_get_num(val));
-        } else if constexpr (std::is_same_v<FieldType, bool>) {
+        }
+
+        else if constexpr (std::is_same_v<FieldType, bool>) {
             if (!yyjson_is_bool(val)) [[unlikely]]
                 return jacinth::errc::type_mismatch;
+
             field = yyjson_get_bool(val);
-        } else if constexpr (std::is_integral_v<FieldType>) {
+        }
+
+        else if constexpr (std::is_integral_v<FieldType>) {
             if (yyjson_is_uint(val)) [[unlikely]]
                 field = FieldType(yyjson_get_uint(val));
             else if (yyjson_is_int(val))
@@ -347,6 +359,7 @@ export {
             else
                 return jacinth::errc::type_mismatch;
         }
+
         // enums are serialized as their underlying type
         else if constexpr (std::is_enum_v<FieldType>) {
             using UnderlyingType = std::underlying_type_t<FieldType>;
@@ -359,6 +372,7 @@ export {
             else [[unlikely]]
                 return jacinth::errc::type_mismatch;
         }
+
         // vector, array, static span
         else if constexpr (is_vector_v<FieldType> || is_array_v<FieldType> ||
                            is_span_v<FieldType>) {
@@ -392,15 +406,19 @@ export {
                         // floats accept any numeric element
                         if (yyjson_is_real(elem))
                             field[i] = Elem(elem->uni.f64);
+
                         else if (yyjson_is_uint(elem))
                             field[i] = Elem(elem->uni.u64);
+
                         else if (yyjson_is_int(elem))
                             field[i] = Elem(elem->uni.i64);
+
                         else [[unlikely]]
                             return jacinth::errc::type_mismatch;
                     } else {
                         if (yyjson_is_int(elem))
                             field[i] = Elem(elem->uni.i64);
+
                         else [[unlikely]]
                             return jacinth::errc::type_mismatch;
                     }
@@ -417,6 +435,7 @@ export {
                 }
             }
         }
+
         // maps
         else if constexpr (is_map_v<FieldType>) {
             if (!yyjson_is_obj(val)) [[unlikely]]
@@ -431,6 +450,7 @@ export {
             while ((key = yyjson_obj_iter_next(&iter))) {
                 auto *sub = yyjson_obj_iter_get_val(key);
                 MappedType item;
+
                 if (auto res = parseValue(sub, item); res != jacinth::errc::ok)
                     return res;
 
@@ -438,10 +458,12 @@ export {
                               std::move(item));
             }
         }
+
         // from_json ADL
         else if constexpr (requires { from_json(jacinth::value{nullptr, nullptr}, field); }) {
             from_json(jacinth::value{nullptr, val}, field);
         }
+
         // nested structs, etc.
         else if constexpr (std::is_aggregate_v<FieldType>) {
             if (!yyjson_is_obj(val)) [[unlikely]]
@@ -529,11 +551,12 @@ export {
                             result = parseValue(sub, target);
                         else
                             target.reset();
-                    } else if (!sub) {
-                        result = jacinth::errc::missing_value;
-                    } else {
-                        result = parseValue(sub, target);
                     }
+
+                    else if (!sub)
+                        result = jacinth::errc::missing_value;
+                    else
+                        result = parseValue(sub, target);
                 });
 
             return result;
