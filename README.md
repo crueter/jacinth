@@ -50,7 +50,7 @@ Jacinth is intentionally designed in a limited manner that makes it as easy to u
 
 ## Licensing
 
-I don't know yet. It will *probably* be MIT. I want to make it LGPL, but that has a lot of issues when it comes to C++20 modules. For now assume MIT until licensing is finished.
+This is licensed under the MIT. You are free to use and modify this as you wish, but you ***must*** include the contents of the [`LICENSE`](./LICENSE) file somewhere in your application and source tree. Attribution that your program or library uses Jacinth is highly encouraged but not legally required.
 
 ## Performance
 

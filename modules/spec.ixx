@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Copyright 2026 crueter
+// SPDX-License-Identifier: MIT
+
 // This stores type specializations for parseValue and writeValue
 module;
 

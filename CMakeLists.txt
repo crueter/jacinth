@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright 2026 crueter
+# SPDX-License-Identifier: MIT
+
 cmake_minimum_required(VERSION 3.31)
 
 project(jacinth VERSION 0.1.0 LANGUAGES C CXX)
