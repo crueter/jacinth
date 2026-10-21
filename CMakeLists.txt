@@ -87,7 +87,8 @@ target_sources(jacinth PUBLIC
         modules/write.ixx
         modules/read.ixx
         modules/iter.ixx
-        modules/err.ixx)
+        modules/err.ixx
+        modules/meta.ixx)
 
 target_link_libraries(jacinth PUBLIC yyjson)
 if (NOT JACINTH_USE_REFLECTION)

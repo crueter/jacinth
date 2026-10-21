@@ -1,9 +1,9 @@
 module;
 
 #include <expected>
+#include <optional>
 #include <system_error>
 #include <utility>
-#include <optional>
 
 // force yyjson to have external linkage
 #define yyjson_api_inline yyjson_inline
@@ -11,6 +11,7 @@ module;
 
 #ifdef JACINTH_USE_REFLECTION
 #include <meta>
+#include <ranges>
 #else
 #include "boost/pfr.hpp"
 #endif
@@ -622,16 +623,23 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
         yyjson_mut_set_obj(val);
         jacinth::errc result{};
 
-        auto process_field = [val, doc, &result]
+        constexpr auto plan = jacinth::plan<FieldType>;
+
+        auto process_field = [val, doc, &result, &plan]
 #if defined(__GNUG__) || defined(__clang__)
             [[gnu::always_inline]]
 #elif defined(_MSC_VER)
             [[msvc::forceinline]]
 #endif
-            (std::string_view name, auto &value) {
+            (std::string_view, auto &value, auto Index) {
                 if (result != jacinth::errc::ok)
                     return;
 
+                constexpr auto field_plan = plan.fields[Index];
+                if constexpr (!field_plan.emit)
+                    return;
+
+                constexpr auto name = field_plan.key;
                 using Elem = std::decay_t<decltype(value)>;
 
                 std::optional<bool> res;
@@ -646,9 +654,11 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
                 else if constexpr (std::is_integral_v<Elem>)
                     res = yyjson_mut_obj_add_sint(doc, val, name.data(), int64_t(value));
                 else if constexpr (std::is_same_v<Elem, std::string>)
-                    res = yyjson_mut_obj_add_strncpy(doc, val, name.data(), value.data(), value.size());
+                    res = yyjson_mut_obj_add_strncpy(doc, val, name.data(), value.data(),
+                                                     value.size());
                 else if constexpr (std::is_same_v<Elem, std::string_view>)
-                    res = yyjson_mut_obj_add_strn(doc, val, name.data(), value.data(), value.size());
+                    res =
+                        yyjson_mut_obj_add_strn(doc, val, name.data(), value.data(), value.size());
 
                 if (res) {
                     result = res.value() ? jacinth::errc::ok : jacinth::errc::write_error;
@@ -669,18 +679,39 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
             };
 
 #ifdef JACINTH_USE_REFLECTION
-        template for (constexpr auto f :
-                      std::define_static_array(std::meta::nonstatic_data_members_of(
-                          ^^T, std::meta::access_context::current())))
+        constexpr auto members = std::define_static_array(std::meta::nonstatic_data_members_of(
+            ^^FieldType, std::meta::access_context::current()));
+
+        template for (constexpr std::size_t i : std::views::iota(std::size_t(0), members.size()))
         {
-            constexpr auto name = std::meta::identifier_of(f);
-            process_field(name, field.[:f:]);
+            constexpr auto member = members[i];
+
+            // clang-format off
+            process_field({}, field.[:member:], std::integral_constant<std::size_t, i>{});
+            // clang-format on
+
             if (result != jacinth::errc::ok)
                 return result;
         }
 #else
         boost::pfr::for_each_field_with_name(field, process_field);
 #endif
+
+        // FIXME(crueter) Merge all the scalar paths somehow, incl here
+        // Custom "from" spec
+        jacinth::meta_resolver<FieldType>::for_each_from(
+            field, [val, doc, &result](std::string_view name, auto &target) {
+                if (result != jacinth::errc::ok)
+                    return;
+
+                auto *sub = yyjson_mut_null(doc);
+                auto *key = yyjson_mut_strn(doc, name.data(), name.size());
+
+                if (!yyjson_mut_obj_add(val, key, sub))
+                    result = jacinth::errc::write_error;
+                else
+                    result = writeValue(doc, sub, target);
+            });
 
         return result;
     } else {

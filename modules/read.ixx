@@ -1,10 +1,10 @@
 module;
 
 #include <expected>
+#include <span>
 #include <system_error>
 #include <type_traits>
 #include <utility>
-#include <span>
 
 // force yyjson to have external linkage
 #define yyjson_api_inline yyjson_inline
@@ -12,6 +12,7 @@ module;
 
 #ifdef JACINTH_USE_REFLECTION
 #include <meta>
+#include <ranges>
 #else
 #include "boost/pfr.hpp"
 #endif
@@ -20,6 +21,7 @@ export module jacinth:read;
 
 export import :err;
 export import :spec;
+export import :meta;
 
 // TODO: is_<type> funcs?
 
@@ -448,16 +450,23 @@ export {
             yyjson_obj_iter_init(val, &it);
             yyjson_val *cur = yyjson_obj_iter_next(&it);
 
-            auto process_field = [val, &it, &cur, &result]
+            constexpr auto plan = jacinth::plan<FieldType>;
+
+            auto process_field = [val, &it, &cur, &result, &plan]
 #if defined(__GNUG__) || defined(__clang__)
                 [[gnu::always_inline]]
 #elif defined(_MSC_VER)
                 [[msvc::forceinline]]
 #endif
-                (std::string_view name, auto &sub_field) {
+                (std::string_view, auto &sub_field, auto Index) {
                     if (result != jacinth::errc::ok)
                         return;
 
+                    constexpr auto field_plan = plan.fields[Index];
+                    if constexpr (!field_plan.emit)
+                        return;
+
+                    constexpr auto name = field_plan.key;
                     yyjson_val *sub;
 
                     // in-order structs are o(n) instead of o(n*m)
@@ -484,18 +493,46 @@ export {
                 };
 
 #ifdef JACINTH_USE_REFLECTION
-            template for (constexpr auto f :
-                          std::define_static_array(std::meta::nonstatic_data_members_of(
-                              ^^T, std::meta::access_context::current())))
+            constexpr auto members = std::define_static_array(std::meta::nonstatic_data_members_of(
+                ^^FieldType, std::meta::access_context::current()));
+
+            template for (constexpr std::size_t i :
+                          std::views::iota(std::size_t(0), members.size()))
             {
-                constexpr auto name = std::meta::identifier_of(f);
-                process_field(name, field.[:f:]);
+                constexpr auto member = members[i];
+
+                // clang-format off
+                process_field({}, field.[:member:], std::integral_constant<std::size_t, i>{});
+                // clang-format on
+
                 if (result != jacinth::errc::ok)
                     return result;
             }
 #else
             boost::pfr::for_each_field_with_name(field, process_field);
 #endif
+
+            // Custom "from" spec
+            jacinth::meta_resolver<FieldType>::for_each_from(
+                field, [val, &result](std::string_view key, auto &target) {
+                    if (result != jacinth::errc::ok)
+                        return;
+
+                    auto *sub = yyjson_obj_getn(val, key.data(), key.size());
+                    using Target = std::decay_t<decltype(target)>;
+
+                    if constexpr (is_optional_v<Target>) {
+                        if (sub)
+                            result = parseValue(sub, target);
+                        else
+                            target.reset();
+                    } else if (!sub) {
+                        result = jacinth::errc::missing_value;
+                    } else {
+                        result = parseValue(sub, target);
+                    }
+                });
+
             return result;
         } else {
             return jacinth::errc::type_mismatch;
