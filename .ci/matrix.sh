@@ -37,23 +37,23 @@ APPLE_CLANG='appleclang brew-clang'
 # only used by recent GCC
 REFL='true false'
 
-# runs-on
-WIN_RO="windows-latest windows-11-arm"
-UBUNTU_RO="ubuntu-26.04 ubuntu-26.04-arm"
+# runs-on=arch
+WIN_RO="windows-latest=amd64 windows-11-arm=aarch64"
+UBUNTU_RO="ubuntu-26.04=amd64 ubuntu-26.04-arm=aarch64"
 ARCH_RO="$UBUNTU_RO"
-UCRT_RO="windows-latest"
-CLANGARM_RO="windows-11-arm"
-MACOS_RO="macos-latest"
+UCRT_RO="windows-latest=amd64"
+CLANGARM_RO="windows-11-arm=aarch64"
+MACOS_RO="macos-latest=aarch64"
 
 n=0
 
-# data, runs-on, program, refl
+# data, runner, arch, program, refl
 target() {
 	if [ "$n" -gt 0 ]; then
 		printf ", "
 	fi
 
-	printf '{%s, "runs-on": "%s", "program": "%s", "refl": %s}' "$1" "$2" "$3" "$4"
+	printf '{%s, "runs-on": "%s", "arch": "%s", "program": "%s", "refl": %s}' "$1" "$2" "$3" "$4" "$5"
 	n=$((n + 1))
 }
 
@@ -64,9 +64,12 @@ programs() {
 	refl="${4:-false}"
 
 	for o in $runs; do
+		runner="${o%%=*}"
+		arch="${o##*=}"
+
 		for p in $progs; do
 			for r in $refl; do
-				target "$data" "$o" "$p" "$r"
+				target "$data" "$runner" "$arch" "$p" "$r"
 			done
 		done
 	done

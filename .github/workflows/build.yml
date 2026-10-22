@@ -27,7 +27,7 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.matrix.outputs.matrix) }}
 
-    name: "${{ matrix.name }} ${{ matrix.program }}${{ matrix.refl == true && ' Reflection' || '' }}"
+    name: "${{ matrix.name }} ${{ matrix.program }} ${{ matrix.arch }}${{ matrix.refl == true && ' Reflection' || '' }}"
     runs-on: ${{ matrix.runs-on }}
     container: ${{ matrix.container }}
 
