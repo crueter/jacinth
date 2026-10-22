@@ -44,7 +44,8 @@ void test_array()
     tests::check_match("std::array", jacinth::json::dump(s), expect);
 
     ArrayStruct back = jacinth::json::read(expect);
-    tests::check("std::array roundtrip", back.label == s.label && back.values == s.values);
+    tests::check_match("std::array roundtrip label", back.label, s.label);
+    tests::check_match("std::array roundtrip values", back.values, s.values);
 }
 
 void test_initlist()
@@ -63,7 +64,7 @@ void test_vecdump()
 {
     std::vector<float> vec = {100.3, 678.25, 892349237.23, -198123424, -0};
     std::vector<float> back = jacinth::json::read(jacinth::json::dump(vec));
-    tests::check("vector<float> roundtrip", back == vec);
+    tests::check_match("vector<float> roundtrip", back, vec);
 
     const std::vector<std::string> svec = {"Hello", "Hi", "Hey", "Heyo", "Hola", "Bonjour"};
     const std::string expect = R"(["Hello","Hi","Hey","Heyo","Hola","Bonjour"])";

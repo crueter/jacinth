@@ -56,11 +56,13 @@ void test_read(std::string_view data)
         std::println("    {}", m.username);
     }
 
-    tests::check("Room title is BETA 1.7.3 AWESOME SERVER", room.title == "BETA 1.7.3 AWESOME SERVER");
-    tests::check("Room is playing minecraft", room.game.name == "Minecraft");
-    tests::check("Room has 4 members", room.members.size() == 4);
-    tests::check("Room owner is crueter", room.members[0].username == "crueter");
-    tests::check("Room has an invalid ID", room.id == 0);
+    tests::check_match("Room title", room.title,
+                       std::string("BETA 1.7.3 AWESOME SERVER"));
+    tests::check_match("Room game", room.game.name, std::string("Minecraft"));
+    tests::check_match("Room member size", room.members.size(), std::size_t(4));
+    tests::check_match("Room owner", room.members[0].username,
+                       std::string("crueter"));
+    tests::check_match("Room ID", room.id, uint64_t(0));
     tests::check("Room has no creation time", room.creationTime.empty());
 }
 
@@ -70,7 +72,7 @@ void test_write(std::string_view data)
 
     const auto dumped = jacinth::json::dump(room, {.pretty = true});
 
-    tests::check("data == dumped", data == dumped);
+    tests::check_match("data", std::string(data), dumped);
 }
 
 // ========================= //
@@ -121,15 +123,15 @@ void test_flatten(std::string_view data) {
     std::println("    Height: {}in", person.characteristics.height);
     std::println("    Weight: {}lbs", person.characteristics.weight);
 
-    tests::check("Name is Marcus", person.name == "Marcus");
-    tests::check("Skin is white", person.colors.skin == "white");
-    tests::check("Eyes are blue", person.colors.eyes == "blue");
-    tests::check("Hair is blond", person.colors.hair == "blond");
-    tests::check("Height is 75.5in", person.characteristics.height == 75.5);
-    tests::check("Weight is 196.3lbs", person.characteristics.weight == 196.3);
+    tests::check_match("Name", person.name, std::string("Marcus"));
+    tests::check_match("Skin", person.colors.skin, std::string("white"));
+    tests::check_match("Eyes", person.colors.eyes, std::string("blue"));
+    tests::check_match("Hair", person.colors.hair, std::string("blond"));
+    tests::check_match("Height", person.characteristics.height, 75.5);
+    tests::check_match("Weight", person.characteristics.weight, 196.3);
 
     const auto dumped = jacinth::json::dump(person, {.pretty=true});
-    tests::check("data == dumped", data == dumped);
+    tests::check_match("data", std::string(data), dumped);
 }
 
 int main()

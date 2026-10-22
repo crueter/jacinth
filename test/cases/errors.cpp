@@ -149,8 +149,8 @@ void test_errc()
     auto bad = jacinth::doc::try_read("nope");
     tests::check("error_code == errc comparison",
                  !bad.has_value() && bad.error() == jacinth::errc::invalid_json);
-    tests::check("error category name",
-                 std::string(bad.error().category().name()) == "jacinth");
+    tests::check_match("error category name",
+                       std::string(bad.error().category().name()), std::string("jacinth"));
     tests::check("error message non-empty", !bad.error().message().empty());
     auto missing = jacinth::doc::try_read<Car>(release_data);
     tests::check("error_code != errc comparison", missing.error() != jacinth::errc::invalid_json);
