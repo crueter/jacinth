@@ -72,7 +72,7 @@ else()
     set(lib_type STATIC)
 endif()
 
-add_library(jacinth)
+add_library(jacinth ${lib_type})
 
 if (JACINTH_USE_REFLECTION)
     target_compile_definitions(jacinth PUBLIC

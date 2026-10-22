@@ -1,0 +1,56 @@
+module;
+
+#include <string_view>
+#include <print>
+#include <expected>
+
+export module tests;
+
+import jacinth;
+
+export namespace tests {
+
+std::size_t failed = 0;
+std::size_t passed = 0;
+
+// TODO USE A REAL TEST FRAMEWORK
+bool check(std::string_view test, bool condition)
+{
+    if (condition) {
+        std::println("PASS: {}", test);
+        ++passed;
+    } else {
+        std::println("FAIL: {}", test);
+        ++failed;
+    }
+
+    return condition;
+}
+
+template <typename T>
+void check_match(std::string_view test, T actual, T expect) {
+    if (!check(std::format("{} == {}", test, expect), actual == expect)) {
+        std::println("Expected: {}", expect);
+        std::println("Got     : {}", actual);
+    }
+}
+
+template <typename T>
+void check_errc(std::string_view test, std::expected<T, std::error_code> actual, jacinth::errc expect) {
+    jacinth::errc err = actual ? jacinth::errc::ok
+                               : jacinth::errc(actual.error().value());
+
+    if (!check(test, err == expect)) {
+        std::println("  expected {}, got {}", int(expect), int(err));
+    }
+}
+
+void exit() {
+    std::println("-----------------------------------");
+    std::println("TESTS RAN: {} PASSED: {} FAILED: {}", passed + failed, passed, failed);
+    std::println("-----------------------------------");
+
+    std::exit(failed);
+}
+
+};

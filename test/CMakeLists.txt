@@ -3,6 +3,8 @@
 
 cmake_minimum_required(VERSION 3.31)
 
+enable_testing()
+
 project(jacinth_test LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -14,19 +16,22 @@ if (PROJECT_IS_TOP_LEVEL)
     find_package(jacinth REQUIRED)
 endif()
 
-# main test
-add_executable(test main.cpp)
+# test lib
+add_library(tests STATIC)
 
-target_link_libraries(test PRIVATE jacinth::jacinth)
-target_compile_options(test PRIVATE -Werror=unused-result -Wall -Wextra -Werror)
+target_sources(tests PUBLIC
+    FILE_SET tests TYPE CXX_MODULES FILES tests.ixx)
 
-# meta spec test
-add_executable(meta meta.cpp)
+target_link_libraries(tests PUBLIC jacinth::jacinth)
+target_compile_options(tests PUBLIC
+    -Werror=unused-result -Wall -Wextra -Werror
+    -Wno-c23-extensions)
 
-target_link_libraries(meta PRIVATE jacinth::jacinth)
-target_compile_options(meta PRIVATE -Werror=unused-result -Wall -Wextra -Werror)
+set(TESTS meta numvec errors array adl move release map cars)
 
-# jsons
-file(COPY_FILE release.json ${CMAKE_CURRENT_BINARY_DIR}/release.json)
-file(COPY_FILE cars.json ${CMAKE_CURRENT_BINARY_DIR}/cars.json)
-file(COPY_FILE room.json ${CMAKE_CURRENT_BINARY_DIR}/room.json)
+foreach(test ${TESTS})
+    add_executable(${test} cases/${test}.cpp)
+    target_link_libraries(${test} PRIVATE tests)
+
+    add_test(NAME ${test} COMMAND ${test})
+endforeach()

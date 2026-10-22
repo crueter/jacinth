@@ -4,9 +4,13 @@
 module;
 
 #include <expected>
+#include <map>
 #include <optional>
+#include <set>
+#include <string>
 #include <system_error>
 #include <utility>
+#include <vector>
 
 // force yyjson to have external linkage
 #define yyjson_api_inline yyjson_inline
@@ -131,10 +135,18 @@ public:
         if (!m_val)
             return std::unexpected(jacinth::make_error_code(jacinth::errc::missing_value));
 
-        // TODO: this sucks, find a way to optimize
-        auto *idoc = yyjson_mut_val_imut_copy(m_val, nullptr);
-        auto res = parseValue(idoc->root, value);
-        yyjson_doc_free(idoc);
+        jacinth::errc res;
+
+        // scalar muts and immuts are identical in terms of layout
+        if (!yyjson_mut_is_ctn(m_val)) {
+            res = parseValue(reinterpret_cast<yyjson_val *>(m_val), value);
+        } else {
+            // TODO: this sucks, find a way to optimize
+            // note: view/refs will dangle here
+            auto *idoc = yyjson_mut_val_imut_copy(m_val, nullptr);
+            res = parseValue(idoc->root, value);
+            yyjson_doc_free(idoc);
+        }
 
         if (res == jacinth::errc::ok)
             return {};
@@ -257,7 +269,13 @@ public:
 
     std::size_t size() const
     {
-        return yyjson_mut_arr_size(m_val);
+        if (is_array()) {
+            return yyjson_mut_arr_size(m_val);
+        } else if (is_object()) {
+            return yyjson_mut_obj_size(m_val);
+        } else {
+            return 0;
+        }
     }
 
     bool is_object() const
@@ -645,7 +663,9 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
 
     // nested structs, etc
     else if constexpr (std::is_aggregate_v<FieldType>) {
-        yyjson_mut_set_obj(val);
+        if (!yyjson_mut_is_obj(val))
+            yyjson_mut_set_obj(val);
+
         jacinth::errc result{};
 
         constexpr auto plan = jacinth::plan<FieldType>;
@@ -663,6 +683,11 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
                 constexpr auto field_plan = plan.fields[Index];
                 if constexpr (!field_plan.emit)
                     return;
+
+                if constexpr (field_plan.flatten) {
+                    result = writeValue(doc, val, value);
+                    return;
+                }
 
                 constexpr auto name = field_plan.key;
                 using Elem = std::decay_t<decltype(value)>;

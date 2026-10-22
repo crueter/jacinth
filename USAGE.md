@@ -17,6 +17,7 @@ This contains all presently documented use cases for Jacinth.
     - [From](#from)
     - [Exclude](#exclude)
     - [Include](#include)
+    - [Flatten](#flatten)
     - [Full Example](#full-example)
   - [Other Fun Stuff](#other-fun-stuff)
     - [Accessing `jacinth::value` and `jacinth::mutable_value`](#accessing-jacinthvalue-and-jacinthmutable_value)
@@ -360,6 +361,10 @@ When dumping to JSON, only `name`, `members,` and the `from` fields will be writ
 > Renamed fields will use the specified JSON key, *not* the member name. In this example, excluding `title` would do nothing, whereas excluding `name` would properly exclude that field.
 >
 > You should also avoid defining both `exclude` and `include`. Currently `exclude` will win but this is undefined behavior and subject to change at any point.
+
+### Flatten
+
+If a struct contains one or more child structs, and you wish to *flatten* those child structs--that is, write their fields directly to the root
 
 ### Full Example
 

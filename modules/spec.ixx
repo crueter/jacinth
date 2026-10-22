@@ -8,6 +8,7 @@ module;
 #include <map>
 #include <optional>
 #include <span>
+#include <string_view>
 #include <vector>
 
 #include "yyjson.h"
@@ -84,6 +85,7 @@ export {
     // without this, assignment to an std::string or std::vector is ambiguous
     template <typename T>
     concept json_convertible = !std::is_pointer_v<T> && !std::is_same_v<T, std::nullptr_t> &&
+                               !std::is_same_v<T, std::string_view> &&
                                !std::is_same_v<std::remove_cv_t<T>, char> && !is_init_list_v<T>;
 };
 
