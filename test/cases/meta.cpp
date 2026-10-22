@@ -96,7 +96,7 @@ struct Person {
 };
 
 // this will flatten the "characteristics" and "colors" subfields into Person
-// serializes to: {name, }
+// serializes to: {height, weight, eyeColor, skinColor, hairColor}
 template <>
 inline constexpr jacinth::obj jacinth::meta<Person> = {
     jacinth::flatten("characteristics", "colors"),
