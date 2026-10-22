@@ -3,7 +3,6 @@
 
 #include <array>
 #include <span>
-#include <cassert>
 #include <string>
 #include <vector>
 
