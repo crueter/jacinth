@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: MIT
 
 #include <optional>
+#include <print>
 #include <string>
+#include <string_view>
 #include <vector>
 
 import jacinth;

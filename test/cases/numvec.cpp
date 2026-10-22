@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: Copyright 2026 crueter
 // SPDX-License-Identifier: MIT
 
+#include <array>
+#include <print>
 #include <span>
 #include <string_view>
 #include <vector>
-#include <array>
 
 import jacinth;
 import tests;

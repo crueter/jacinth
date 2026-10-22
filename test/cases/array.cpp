@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include <array>
+#include <print>
 #include <span>
 #include <string>
 #include <vector>

@@ -48,6 +48,33 @@ Jacinth is intentionally designed in a limited manner that makes it as easy to u
 - Singular API pattern
   - Jacinth intentionally implements several different API surfaces and patterns so you can choose which way works best. It's generally designed such that it can serve as a near drop-in replacement for nlohmann, while adding extra features to make your life even easier.
 
+## Compiler Support
+
+To use Jacinth, your C++ compiler and standard library *must* support, *at a minimum*:
+
+- [P1103 C++20 Modules](https://en.cppreference.com/cpp/language/modules)
+- [P0323 `std::expected`](https://en.cppreference.com/cpp/header/expected)
+
+The in-repo test suite has a few more requirements:
+
+- [P2286 Formatting Ranges](https://en.cppreference.com/cpp/utility/format/range_formatter)
+- [P2093 `std::print`](https://en.cppreference.com/cpp/header/print)
+
+Using C++26 compile-reflection instead of Boost.PFR also requires:
+
+- [P2996 Reflection](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p2996r13.html)
+- [P3491 `define_static_array`](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3491r3.html)
+- [P1306 Expansion Statements (`template for`)](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p1306r5.html)
+
+Thus, the following compilers are supported:
+
+- GCC >=16 (+ reflection)
+  - Versions below 16.2 may be unstable with reflection enabled. Some distributions, such as Gentoo, are unaffected, but Arch Linux and Ubuntu are known to be affected.
+- Clang >= 19
+- MSVC >= 2022
+
+Clang and MSVC do not support reflection at the time of writing
+
 ## Licensing
 
 This is licensed under the MIT. You are free to use and modify this as you wish, but you ***must*** include the contents of the [`LICENSE`](./LICENSE) file somewhere in your application and source tree. Attribution that your program or library uses Jacinth is highly encouraged but not legally required.
