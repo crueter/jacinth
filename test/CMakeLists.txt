@@ -29,14 +29,15 @@ if (MSVC AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 else()
     target_compile_options(tests PUBLIC
         -Werror=unused-result -Wall -Wextra -Werror
-        -Wno-c23-extensions -Wno-unused-command-line-argument)
+        -Wno-c23-extensions -Wno-unused-command-line-argument
+        -Wno-c++98-compat)
 endif()
 
 # need to link to stdc++exp (on glibc++ only) for std::print on mingw
 if (MINGW)
     include(CheckCXXSymbolExists)
 
-    check_symbol_exists(__GLIBCXX__ "version" HAS_LIBSTDCXX)
+    check_cxx_symbol_exists(__GLIBCXX__ "version" HAS_LIBSTDCXX)
 
     if(HAS_LIBSTDCXX)
         message(STATUS "MinGW libstdc++ needs stdc++exp")
