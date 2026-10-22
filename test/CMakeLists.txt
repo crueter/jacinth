@@ -23,7 +23,7 @@ target_sources(tests PUBLIC
 target_link_libraries(tests PUBLIC jacinth::jacinth)
 if (MSVC AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(tests PUBLIC
-        /W4 /WX /we4834)
+        /W4 /WX /we4834 /wd4702)
 else()
     target_compile_options(tests PUBLIC
         -Werror=unused-result -Wextra -Werror

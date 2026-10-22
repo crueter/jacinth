@@ -578,5 +578,7 @@ export {
         } else {
             return jacinth::errc::type_mismatch;
         }
+
+        return {};
     }
 }
