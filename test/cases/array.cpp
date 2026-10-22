@@ -38,7 +38,7 @@ void test_span()
 
 void test_array()
 {
-    const ArrayStruct s = {"ArrayStruct", {10.5, 6.7, 988.43, -10000000000}};
+    const ArrayStruct s = {"ArrayStruct", {10.5f, 6.7f, 988.43f, -10000000000.0f}};
     const auto expect =
         R"({"label":"ArrayStruct","values":[10.5,6.7,988.43,-10000000000.0]})";
     tests::check_match("std::array", jacinth::json::dump(s), expect);
@@ -62,7 +62,7 @@ void test_initlist()
 
 void test_vecdump()
 {
-    std::vector<float> vec = {100.3, 678.25, 892349237.23, -198123424, -0};
+    std::vector<float> vec = {100.3f, 678.25f, 892349237.23f, -198123424.0f, -0.0f};
     std::vector<float> back = jacinth::json::read(jacinth::json::dump(vec));
     tests::check_match("vector<float> roundtrip", back, vec);
 

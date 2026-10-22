@@ -4,14 +4,11 @@
 module;
 
 #include <expected>
-#include <map>
-#include <set>
 #include <span>
 #include <string>
 #include <system_error>
 #include <type_traits>
 #include <utility>
-#include <vector>
 
 // force yyjson to have external linkage
 #define yyjson_api_inline yyjson_inline
