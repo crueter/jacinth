@@ -22,7 +22,7 @@ container() {
 
 WIN="$(matrix "Windows")"
 UBUNTU_LTS="$(matrix "Ubuntu 26.04")"
-UBUNTU_STABLE="$(matrix "Ubuntu 26.10")"
+UBUNTU_STABLE="$(container "Ubuntu 26.10" ubuntu:26.10)"
 ARCH="$(container "Arch Linux" ghcr.io/pkgforge-dev/archlinux:latest)"
 MACOS="$(matrix "macOS")"
 
