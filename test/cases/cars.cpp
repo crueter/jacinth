@@ -31,7 +31,7 @@ void test_cars(std::string_view data)
 {
     const std::vector<Car> cars = jacinth::json::read(data);
 
-    tests::check_match("Cars size", cars.size(), 4UL);
+    tests::check_match("Cars size", cars.size(), std::size_t(4));
 
     const std::string_view makes[] = {"Acura", "Chevrolet", "Ford", "Toyota"};
     const std::string_view models[] = {"MDX", "Suburban", "F-150 Raptor", "Corolla"};

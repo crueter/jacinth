@@ -23,20 +23,26 @@ target_sources(tests PUBLIC
     FILE_SET tests TYPE CXX_MODULES FILES tests.ixx)
 
 target_link_libraries(tests PUBLIC jacinth::jacinth)
-if (MSVC)
+if (MSVC AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(tests PUBLIC
         /W4 /WX /we4834)
 else()
     target_compile_options(tests PUBLIC
         -Werror=unused-result -Wall -Wextra -Werror
-        -Wno-c23-extensions)
+        -Wno-c23-extensions -Wno-unused-command-line-argument)
 endif()
 
-# awesome cmake moment
-if (MSVC AND CMAKE_CXX_COMPILER MATCHES "Clang")
-    target_compile_options(tests PUBLIC -Wno-unused-command-line-argument)
-endif()
+# need to link to stdc++exp (on glibc++ only) for std::print on mingw
+if (MINGW)
+    include(CheckCXXSymbolExists)
 
+    check_symbol_exists(__GLIBCXX__ "version" HAS_LIBSTDCXX)
+
+    if(HAS_LIBSTDCXX)
+        message(STATUS "MinGW libstdc++ needs stdc++exp")
+        target_link_libraries(tests PUBLIC stdc++exp)
+    endif()
+endif()
 
 set(TESTS meta numvec errors array adl move release map cars)
 
