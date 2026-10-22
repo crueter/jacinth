@@ -25,23 +25,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJSON(needs.matrix.outputs.matrix) }}
+        include: ${{ fromJSON(needs.matrix.outputs.matrix) }}
 
-    name: "${{ matrix.os.name }} ${{ matrix.os.program }}${{ matrix.os.refl == true && ' Reflection' || '' }}"
-    runs-on: ${{ matrix.os.runs-on }}
-    container: ${{ matrix.os.container }}
+    name: "${{ matrix.name }} ${{ matrix.program }}${{ matrix.refl == true && ' Reflection' || '' }}"
+    runs-on: ${{ matrix.runs-on }}
+    container: ${{ matrix.container }}
 
     defaults:
       run:
-        shell: ${{ matrix.os.msystem && 'msys2 {0}' || 'bash' }}
+        shell: ${{ matrix.msystem && 'msys2 {0}' || 'bash' }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
       - name: Install Packages (Arch Linux)
-        if: matrix.os.container
-        run: pacman -Syu --noconfirm --needed cmake ninja ${{ matrix.os.program }}
+        if: matrix.container
+        run: pacman -Syu --noconfirm --needed cmake ninja ${{ matrix.program }}
 
       - name: Install Packages (macOS)
         if: runner.os == 'macOS'
@@ -50,21 +50,21 @@ jobs:
           brew install llvm cmake ninja
 
       - name: Setup MSYS2
-        if: matrix.os.msystem
+        if: matrix.msystem
         id: msys2
         uses: msys2/setup-msys2@v2
         with:
-          msystem: ${{ matrix.os.msystem }}
+          msystem: ${{ matrix.msystem }}
           update: true
           pacboy: >-
             toolchain:p cmake:p ninja:p
 
       - name: Setup MSVC
-        if: matrix.os.name == 'Windows'
+        if: matrix.name == 'Windows'
         uses: crueter/setup-msvc-dev@master
 
       - name: Install LLVM/Clang
-        if: matrix.os.program == 'clang-cl'
+        if: matrix.program == 'clang-cl'
         uses: Nerixyz/install-llvm-action@feat/new-llvm-versions
         with:
           version: 23
@@ -72,12 +72,12 @@ jobs:
 
       - name: Configure
         run: |
-          case "${{ matrix.os.program }}" in
+          case "${{ matrix.program }}" in
             # gcc is already default where needed
             msvc|gcc) ;;
             clang-cl)
               cc=clang-cl
-              cxx=clang++ ;;
+              cxx=clang-cl ;;
             clang|appleclang)
               cc=clang
               cxx=clang++ ;;
@@ -88,7 +88,7 @@ jobs:
           esac
 
           refl=OFF
-          if [ "${{ matrix.os.refl }}" = "true" ]; then
+          if [ "${{ matrix.refl }}" = "true" ]; then
             refl=ON
           fi
 

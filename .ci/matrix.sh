@@ -5,87 +5,89 @@
 # macOS: appleclang, homebrew clang
 
 matrix() {
-	name="$1"
-	shift
-
-	n=0
-	os="["
-	for i in "$@"; do
-		if [ "$n" -gt 0 ]; then
-			os="$os, "
-		fi
-
-		os="$os\"$i\""
-		n=$((n + 1))
-	done
-
-	os="$os]"
-
-	printf '"name": "%s", "runs-on": %s' "$name" "$os"
+	printf '"name": "%s"' "$1"
 }
 
 msys() {
-	name="$1"
-	msystem="$2"
-	shift 2
-	matrix "$name" "$@"
+	matrix "$1"
 
-	printf ', "msystem": "%s"' "$msystem"
+	printf ', "msystem": "%s"' "$2"
 }
 
 container() {
-	name="$1"
-	container="$2"
-	shift 2
-	matrix "$name" "$@"
+	matrix "$1"
 
-	printf ', "container": "%s"' "$container"
+	printf ', "container": "%s"' "$2"
 }
 
-WIN="$(matrix "Windows" windows-latest windows-11-arm)"
-UBUNTU="$(matrix "Ubuntu" ubuntu-26.04 ubuntu-26.04-arm)"
-ARCH="$(container "Arch Linux" ghcr.io/pkgforge-dev/archlinux:latest ubuntu-26.04 ubuntu-26.04-arm)"
-MACOS="$(matrix "macOS" macos-latest)"
+WIN="$(matrix "Windows")"
+UBUNTU="$(matrix "Ubuntu")"
+ARCH="$(container "Arch Linux" ghcr.io/pkgforge-dev/archlinux:latest)"
+MACOS="$(matrix "macOS")"
 
-UCRT64="$(msys "MSYS2 UCRT64" UCRT64 windows-latest)"
-CLANGARM64="$(msys "MSYS2 CLANGARM64" CLANGARM64 windows-11-arm)"
+UCRT64="$(msys "MSYS2 UCRT64" UCRT64)"
+CLANGARM64="$(msys "MSYS2 CLANGARM64" CLANGARM64)"
 
-CL='["msvc", "clang-cl"]'
-GCC='["gcc"]'
-GCC_CLANG='["gcc", "clang"]'
-CLANG='["clang"]'
-APPLE_CLANG='["appleclang", "brew-clang"]'
+CL='msvc clang-cl'
+GCC='gcc'
+GCC_CLANG='gcc clang'
+CLANG='clang'
+APPLE_CLANG='appleclang brew-clang'
 
 # only used by recent GCC
-REFL='[true, false]'
+REFL='true false'
+
+# runs-on
+WIN_RO="windows-latest windows-11-arm"
+UBUNTU_RO="ubuntu-26.04 ubuntu-26.04-arm"
+ARCH_RO="$UBUNTU_RO"
+UCRT_RO="windows-latest"
+CLANGARM_RO="windows-11-arm"
+MACOS_RO="macos-latest"
 
 n=0
 
+# data, runs-on, program, refl
 target() {
 	if [ "$n" -gt 0 ]; then
 		printf ", "
 	fi
 
-	printf '{%s, "program": %s, "refl": %s}' "$1" "$2" "${3:-false}"
+	printf '{%s, "runs-on": "%s", "program": "%s", "refl": %s}' "$1" "$2" "$3" "$4"
 	n=$((n + 1))
+}
+
+programs() {
+	data="$1"
+	runs="$2"
+	progs="$3"
+	refl="${4:-false}"
+
+	for o in $runs; do
+		for p in $progs; do
+			for r in $refl; do
+				target "$data" "$o" "$p" "$r"
+			done
+		done
+	done
 }
 
 printf '['
 
 # windows
-target "$WIN" "$CL"
-target "$UCRT64" "$GCC" "$REFL"
-target "$UCRT64" "$CLANG"
-target "$CLANGARM64" "$CLANG"
+programs "$WIN" "$WIN_RO" "$CL"
+programs "$UCRT64" "$UCRT_RO" "$GCC" "$REFL"
+programs "$UCRT64" "$UCRT_RO" "$CLANG"
+programs "$CLANGARM64" "$CLANGARM_RO" "$CLANG"
 
 # ubuntu
-target "$UBUNTU" "$GCC_CLANG"
+programs "$UBUNTU" "$UBUNTU_RO" "$GCC_CLANG"
 
 # arch
-target "$ARCH" "$CLANG"
-target "$ARCH" "$GCC" "$REFL"
+programs "$ARCH" "$ARCH_RO" "$CLANG"
+programs "$ARCH" "$ARCH_RO" "$GCC" "$REFL"
 
 # macos
-target "$MACOS" "$APPLE_CLANG"
+programs "$MACOS" "$MACOS_RO" "$APPLE_CLANG"
 
 echo ']'
