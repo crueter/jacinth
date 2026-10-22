@@ -109,12 +109,6 @@ if ("${launcher}" MATCHES "ccache")
         C_COMPILER_LAUNCHER "")
 endif()
 
-# GCC 15 ICE
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
-        AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 15.3)
-    target_compile_options(jacinth PUBLIC "-fdisable-tree-ealias")
-endif()
-
 if (JACINTH_INSTALL)
     include(GNUInstallDirs)
     install(TARGETS jacinth
@@ -146,5 +140,6 @@ if (JACINTH_INSTALL)
 endif()
 
 if (JACINTH_BUILD_TESTS)
+    enable_testing()
     add_subdirectory(test)
 endif()
