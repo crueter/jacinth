@@ -1,10 +1,12 @@
 module;
 
+#include <concepts>
 #include <string_view>
 #include <string>
 #include <print>
 #include <expected>
 #include <system_error>
+#include <type_traits>
 
 export module tests;
 
@@ -37,6 +39,7 @@ inline bool check(std::string_view test, bool condition)
 }
 
 template <typename T, typename J>
+    requires std::equality_comparable_with<T, J>
 void check_match(std::string_view test, T actual, J expect) {
     if (!check(std::format("{} == {}", test, expect), actual == expect)) {
         std::println("Got: {}", actual);
