@@ -38,7 +38,6 @@ GCC='gcc'
 GCC16='gcc-16'
 GCC_CLANG='gcc clang'
 CLANG='clang'
-CLANG17='clang-17'
 APPLE_CLANG='brew-clang'
 
 # broken, appleclang does not yet support modules
@@ -101,7 +100,7 @@ programs "$UCRT64" "$UCRT_RO" "$CLANG"
 programs "$CLANGARM64" "$CLANGARM_RO" "$CLANG"
 
 # debian
-programs "$DEBIAN" "$UBUNTU_RO" "$CLANG17"
+programs "$DEBIAN" "$UBUNTU_RO" "$CLANG"
 
 # ubuntu
 programs "$UBUNTU_LTS" "$UBUNTU_RO" "$CLANG"

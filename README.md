@@ -9,8 +9,8 @@ Jacinth is a simple, low-overhead JSON library for C++23 and C++26 that provides
 Jacinth is (currently) a relatively thin OOP wrapper around the very fast [yyjson](https://github.com/ibireme/yyjson). It features:
 
 - Compile-time struct reflection, enabling serialization and deserialization of arbitrarily complex struct types with low overhead
-  - GCC 16 and up get access to the extremely powerful (and fast) [P2996 Reflection API](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p2996r13.html)
-  - Clang, MSVC, and GCC <=15 instead will use [Boost.PFR](https://www.boost.org/doc/libs/latest/doc/html/boost_pfr.html), which isn't as fast as C++26 reflection, but is very close.
+  - GCC gets access to the extremely powerful (and fast) [P2996 Reflection API](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p2996r13.html)
+  - Clang and MSVC instead will use [Boost.PFR](https://www.boost.org/doc/libs/latest/doc/html/boost_pfr.html), which isn't as fast as C++26 reflection, but is very close.
     - The included PFR is version 1.92, but anything newer than 1.80 or so should work.
 - A mutable nlohmann-like JSON object API (`jacinth::json`, `jacinth::mutable_value`)
 - A fast, lazy, on-demand parser for immutable objects (`jacinth::doc`, `jacinth::value`)
@@ -113,7 +113,7 @@ Jacinth can be used both as a system and a vendored target. It can be integrated
 
 Jacinth creates a `jacinth::jacinth` target, so you can link to Jacinth via `target_link_libraries(MyApp PRIVATE jacinth::jacinth)`. You usually shouldn't need Jacinth within your header files, so internal targets generally won't need `PUBLIC` propagation. Both the system and vendored targets provide a `JACINTH_USE_REFLECTION` option. Enabling this will add `-freflection` to your compile options, force the C++26 standard, and define `JACINTH_USE_REFLECTION` in the module.
 
-In order for Jacinth to properly compile and for `import jacinth;` to work, you MUST turn on `CMAKE_CXX_SCAN_FOR_MODULES`, and use a supported generator. Ninja is recommended. For `clang-cl`, CMake 4.4 or newer is required and the Visual Studio generator is not supported. Obviously you'll need a modern compiler too; GCC >=15, Clang >=19, and MSVC >=2022 should all work fine.
+In order for Jacinth to properly compile and for `import jacinth;` to work, you MUST turn on `CMAKE_CXX_SCAN_FOR_MODULES`, and use a supported generator. Ninja is recommended. For `clang-cl`, CMake 4.4 or newer is required and the Visual Studio generator is not supported. Obviously you'll need a modern compiler too; GCC >=16, Clang >=19, and MSVC >=2022 should all work fine.
 
 ### Adding Jacinth to your project
 

@@ -20,10 +20,10 @@ if (id MATCHES "GNU" AND ver VERSION_LESS 16)
         are supported.")
 endif()
 
-# Clang must be 17+ (maybe 19+ idk)
+# Clang must be 19+
 if (id MATCHES "Clang")
-    if(ver VERSION_LESS 17)
-        message(FATAL_ERROR "Unsupported Clang version ${ver}. Only 17 and
+    if(ver VERSION_LESS 19)
+        message(FATAL_ERROR "Unsupported Clang version ${ver}. Only 19 and
             up are supported.")
     endif()
 
