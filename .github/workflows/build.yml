@@ -17,31 +17,31 @@ jobs:
       - name: Generate Build Matrix
         id: matrix
         run: |
-          echo "matrix=$(./.ci/matrix.sh)" >> "$GITHUB_OUTPUT"
-          .ci/matrix.sh
+          echo "matrix=$(./.ci/matrix.os.sh)" >> "$GITHUB_OUTPUT"
+          .ci/matrix.os.sh
 
   build:
     needs: matrix
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.matrix.outputs.matrix) }}
+        os: ${{ fromJSON(needs.matrix.outputs.matrix) }}
 
-    name: "${{ matrix.name }} ${{ matrix.program }}${{ matrix.refl == true && ' Reflection' || '' }}"
-    runs-on: ${{ matrix.runs-on }}
-    container: ${{ matrix.container }}
+    name: "${{ matrix.os.name }} ${{ matrix.os.program }}${{ matrix.os.refl == true && ' Reflection' || '' }}"
+    runs-on: ${{ matrix.os.runs-on }}
+    container: ${{ matrix.os.container }}
 
     defaults:
       run:
-        shell: ${{ matrix.msystem && 'msys2 {0}' || 'bash' }}
+        shell: ${{ matrix.os.msystem && 'msys2 {0}' || 'bash' }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
       - name: Install Packages (Arch Linux)
-        if: matrix.container
-        run: pacman -Syu --noconfirm --needed cmake ninja ${{ matrix.program }}
+        if: matrix.os.container
+        run: pacman -Syu --noconfirm --needed cmake ninja ${{ matrix.os.program }}
 
       - name: Install Packages (macOS)
         if: runner.os == 'macOS'
@@ -50,21 +50,21 @@ jobs:
           brew install llvm cmake ninja
 
       - name: Setup MSYS2
-        if: matrix.msystem
+        if: matrix.os.msystem
         id: msys2
         uses: msys2/setup-msys2@v2
         with:
-          msystem: ${{ matrix.msystem }}
+          msystem: ${{ matrix.os.msystem }}
           update: true
           pacboy: >-
             toolchain:p cmake:p ninja:p
 
       - name: Setup MSVC
-        if: matrix.name == 'Windows'
+        if: matrix.os.name == 'Windows'
         uses: crueter/setup-msvc-dev@master
 
       - name: Install LLVM/Clang
-        if: matrix.program == 'clang-cl'
+        if: matrix.os.program == 'clang-cl'
         uses: Nerixyz/install-llvm-action@feat/new-llvm-versions
         with:
           version: 23
@@ -72,7 +72,7 @@ jobs:
 
       - name: Configure
         run: |
-          case "${{ matrix.program }}" in
+          case "${{ matrix.os.program }}" in
             # gcc is already default where needed
             msvc|gcc) ;;
             clang-cl)
@@ -88,7 +88,7 @@ jobs:
           esac
 
           refl=OFF
-          if [ "${{ matrix.refl }}" = "true" ]; then
+          if [ "${{ matrix.os.refl }}" = "true" ]; then
             refl=ON
           fi
 
