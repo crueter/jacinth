@@ -32,7 +32,10 @@ CL='msvc clang-cl'
 GCC='gcc'
 GCC_CLANG='gcc clang'
 CLANG='clang'
-APPLE_CLANG='appleclang brew-clang'
+APPLE_CLANG='brew-clang'
+
+# broken, appleclang does not yet support modules
+# APPLE_CLANG='appleclang brew-clang'
 
 # only used by recent GCC
 REFL='true false'

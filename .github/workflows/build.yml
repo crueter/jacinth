@@ -57,7 +57,7 @@ jobs:
           msystem: ${{ matrix.msystem }}
           update: true
           pacboy: >-
-            toolchain:p cmake:p ninja:p
+            toolchain:p cmake:p ninja:p clang:p
 
       - name: Setup MSVC
         if: matrix.name == 'Windows'

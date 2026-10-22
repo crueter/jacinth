@@ -32,6 +32,12 @@ else()
         -Wno-c23-extensions)
 endif()
 
+# awesome cmake moment
+if (MSVC AND CMAKE_CXX_COMPILER MATCHES "Clang")
+    target_compile_options(tests PUBLIC -Wno-unused-command-line-argument)
+endif()
+
+
 set(TESTS meta numvec errors array adl move release map cars)
 
 foreach(test ${TESTS})

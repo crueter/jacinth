@@ -39,7 +39,7 @@ void test_refl(std::string_view data)
         std::string(
             "https://git.eden-emu.dev/eden-ci/nightly/releases/tag/v1789678126.0ce29be608"));
 
-    tests::check_match("Release assets size", release.assets.size(), 32UL);
+    tests::check_match("Release assets size", release.assets.size(), std::size_t(32));
     tests::check("Release asset 0 Node ID missing", !release.assets[0].node_id);
     tests::check_match("Release asset 1 Node ID", release.assets[1].node_id.value(),
                        std::string("node1234"));
@@ -60,10 +60,10 @@ void test_mutate(std::string_view data)
     tests::check_match("Mutated release body", json.get<std::string>("body"), newBody);
 
     json["assets"].remove(1);
-    tests::check_match("Mutated release assets (1 removed) size", json["assets"].size(), 31UL);
+    tests::check_match("Mutated release assets (1 removed) size", json["assets"].size(), std::size_t(31));
 
     json["assets"].clear();
-    tests::check_match("Mutated release assets (cleared)", json["assets"].size(), 0UL);
+    tests::check_match("Mutated release assets (cleared)", json["assets"].size(), std::size_t(0));
 
     json.remove("html_url");
     tests::check_match("Mutated release html_url is null", json.get("html_url").is_null(), true);

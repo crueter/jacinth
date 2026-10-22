@@ -3,6 +3,7 @@ module;
 #include <string_view>
 #include <print>
 #include <expected>
+#include <system_error>
 
 export module tests;
 
