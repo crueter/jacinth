@@ -17,8 +17,8 @@ jobs:
       - name: Generate Build Matrix
         id: matrix
         run: |
-          echo "matrix=$(./.ci/matrix.os.sh)" >> "$GITHUB_OUTPUT"
-          .ci/matrix.os.sh
+          echo "matrix=$(./.ci/matrix.sh)" >> "$GITHUB_OUTPUT"
+          .ci/matrix.sh
 
   build:
     needs: matrix
