@@ -9,6 +9,7 @@ module;
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <type_traits>
 #include <vector>
 
 #ifdef JACINTH_USE_REFLECTION
@@ -160,7 +161,7 @@ struct meta_resolver {
         bool found = false;
 
         const auto check = [&](auto const &e) {
-            if constexpr (e.kind == entry_kind::include) {
+            if constexpr (std::decay_t<decltype(e)>::kind == entry_kind::include) {
                 have_include = true;
                 found = found || has_key(e, key);
             }
@@ -178,7 +179,7 @@ struct meta_resolver {
         bool found = false;
 
         const auto check = [&](auto const &e) {
-            if constexpr (e.kind == entry_kind::exclude)
+            if constexpr (std::decay_t<decltype(e)>::kind == entry_kind::exclude)
                 found = found || has_key(e, key);
         };
 
@@ -215,7 +216,7 @@ struct meta_resolver {
         std::string_view key = name;
 
         const auto check = [&](auto const &e) {
-            if constexpr (e.kind == entry_kind::rename)
+            if constexpr (std::decay_t<decltype(e)>::kind == entry_kind::rename)
                 if (e.field == name)
                     key = e.key;
         };
@@ -229,7 +230,7 @@ struct meta_resolver {
     static constexpr void for_each_from(Obj &obj, Fn &&fn)
     {
         const auto visit = [&](auto const &e) {
-            if constexpr (e.kind == entry_kind::from)
+            if constexpr (std::decay_t<decltype(e)>::kind == entry_kind::from)
                 fn(e.key, e.accessor(obj));
         };
 
@@ -242,7 +243,7 @@ struct meta_resolver {
         bool found = false;
 
         const auto check = [&](auto const &e) {
-            if constexpr (e.kind == entry_kind::flatten)
+            if constexpr (std::decay_t<decltype(e)>::kind == entry_kind::flatten)
                 found = found || has_key(e, key);
         };
 

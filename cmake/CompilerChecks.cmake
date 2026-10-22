@@ -44,8 +44,8 @@ if (id MATCHES "Clang")
     endif()
 endif()
 
-# MSVC must be 2022+ (19.39 specifically)
-if (id MATCHES "MSVC" AND ver VERSION_LESS 19.39)
-    message(FATAL_ERROR "Unsupported MSVC version ${ver}. Only 2022 and
-        up (19.39+) are supported.")
+# MSVC must be 2026+ (19.50+)
+if (id MATCHES "MSVC" AND ver VERSION_LESS 19.50)
+    message(FATAL_ERROR "Unsupported MSVC version ${ver}. Only 2026 and
+        up (19.50+) are supported.")
 endif()

@@ -34,6 +34,7 @@ UCRT64="$(msys "MSYS2 UCRT64" UCRT64)"
 CLANGARM64="$(msys "MSYS2 CLANGARM64" CLANGARM64)"
 
 CL='msvc clang-cl'
+CLANG_CL='clang-cl'
 GCC='gcc'
 GCC16='gcc-16'
 GCC_CLANG='gcc clang'
@@ -92,7 +93,7 @@ printf '['
 
 # windows
 programs "$WIN" "$WIN_RO" "$CL"
-programs "$WIN2022" "$WIN2022_RO" "$CL"
+programs "$WIN2022" "$WIN2022_RO" "$CLANG_CL"
 
 # msys
 programs "$UCRT64" "$UCRT_RO" "$GCC" "$REFL"
