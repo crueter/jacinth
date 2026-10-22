@@ -28,15 +28,8 @@ if (MSVC AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         /W4 /WX /we4834)
 else()
     target_compile_options(tests PUBLIC
-        -Werror=unused-result -Wall -Wextra -Werror
+        -Werror=unused-result -Wextra -Werror
         -Wno-c23-extensions -Wno-unused-command-line-argument)
-
-    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        target_compile_options(tests PUBLIC
-            -Wno-c++98-compat -Wno-missing-variable-declarations
-            -Wno-missing-prototypes -Wno-shorten-64-to-32
-            -Wno-missing-noreturn -Wno-newline-eof)
-    endif()
 endif()
 
 # need to link to stdc++exp (on glibc++ only) for std::print on mingw
