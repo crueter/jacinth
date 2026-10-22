@@ -42,9 +42,9 @@ jobs:
       - name: Install Packages (Container)
         if: matrix.container
         run:
-          if command -v pacman >/dev/null 2>&1; then
+          if command -v pacman 2>&1 > /dev/null; then
             pacman -Syu --noconfirm --needed cmake ninja ${{ matrix.program }}
-          elif command -v apt >/dev/null 2>&1; then
+          elif command -v apt 2>&1 >/dev/null; then
             apt install -y cmake ninja-build gcc g++ clang clang++
           fi
 
