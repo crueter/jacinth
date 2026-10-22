@@ -113,7 +113,7 @@ Jacinth can be used both as a system and a vendored target. It can be integrated
 
 Jacinth creates a `jacinth::jacinth` target, so you can link to Jacinth via `target_link_libraries(MyApp PRIVATE jacinth::jacinth)`. You usually shouldn't need Jacinth within your header files, so internal targets generally won't need `PUBLIC` propagation. Both the system and vendored targets provide a `JACINTH_USE_REFLECTION` option. Enabling this will add `-freflection` to your compile options, force the C++26 standard, and define `JACINTH_USE_REFLECTION` in the module.
 
-In order for Jacinth to properly compile and for `import jacinth;` to work, you MUST turn on `CMAKE_CXX_SCAN_FOR_MODULES`, and use a supported generator (e.g. Ninja or Visual Studio). Obviously you'll need a modern compiler too; GCC >=15, Clang >=19, and MSVC >=2022 should all work fine.
+In order for Jacinth to properly compile and for `import jacinth;` to work, you MUST turn on `CMAKE_CXX_SCAN_FOR_MODULES`, and use a supported generator. Ninja is recommended. For `clang-cl`, CMake 4.4 or newer is required and the Visual Studio generator is not supported. Obviously you'll need a modern compiler too; GCC >=15, Clang >=19, and MSVC >=2022 should all work fine.
 
 ### Adding Jacinth to your project
 

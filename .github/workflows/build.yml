@@ -76,6 +76,10 @@ jobs:
         if: matrix.program == 'clang-cl' || matrix.program == 'msvc'
         uses: crueter/setup-msvc-dev@master
 
+      - name: Install CMake and Ninja
+        if: matrix.program == 'clang-cl' || matrix.program == 'msvc'
+        uses: lukka/get-cmake@latest
+
       - name: Install LLVM/Clang
         if: matrix.program == 'clang-cl'
         uses: Nerixyz/install-llvm-action@feat/new-llvm-versions
