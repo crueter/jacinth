@@ -21,8 +21,12 @@ container() {
 }
 
 WIN="$(matrix "Windows")"
+WIN2022="$(matrix "Windows 2022")"
+
+DEBIAN="$(container "Debian 13" debian:trixie)"
 UBUNTU_LTS="$(container "Ubuntu 26.04" ubuntu:26.04)"
 UBUNTU_STABLE="$(container "Ubuntu 26.10" ubuntu:26.10)"
+
 ARCH="$(container "Arch Linux" ghcr.io/pkgforge-dev/archlinux:latest)"
 MACOS="$(matrix "macOS")"
 
@@ -34,6 +38,7 @@ GCC='gcc'
 GCC16='gcc-16'
 GCC_CLANG='gcc clang'
 CLANG='clang'
+CLANG17='clang-17'
 APPLE_CLANG='brew-clang'
 
 # broken, appleclang does not yet support modules
@@ -43,6 +48,7 @@ APPLE_CLANG='brew-clang'
 REFL='true false'
 
 # runs-on=arch
+WIN2022_RO="windows-2022=amd64"
 WIN_RO="windows-latest=amd64 windows-11-arm=aarch64"
 UBUNTU_RO="ubuntu-26.04=amd64 ubuntu-26.04-arm=aarch64"
 
@@ -87,9 +93,15 @@ printf '['
 
 # windows
 programs "$WIN" "$WIN_RO" "$CL"
+programs "$WIN2022" "$WIN2022_RO" "$CL"
+
+# msys
 programs "$UCRT64" "$UCRT_RO" "$GCC" "$REFL"
 programs "$UCRT64" "$UCRT_RO" "$CLANG"
 programs "$CLANGARM64" "$CLANGARM_RO" "$CLANG"
+
+# debian
+programs "$DEBIAN" "$UBUNTU_RO" "$CLANG17"
 
 # ubuntu
 programs "$UBUNTU_LTS" "$UBUNTU_RO" "$CLANG"
