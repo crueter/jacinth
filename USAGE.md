@@ -364,7 +364,56 @@ When dumping to JSON, only `name`, `members,` and the `from` fields will be writ
 
 ### Flatten
 
-If a struct contains one or more child structs, and you wish to *flatten* those child structs--that is, write their fields directly to the root
+If a struct contains one or more child structs, and you wish to *flatten* those child structs--that is, write their fields directly to the root--use `jacinth::flatten`:
+
+```cpp
+struct PhysicalCharacteristics {
+    double height;
+    double weight;
+};
+
+struct Colors {
+    std::string eyes;
+    std::string skin;
+    std::string hair;
+};
+
+struct Person {
+    PhysicalCharacteristics characteristics;
+    Colors colors;
+    std::string name;
+};
+
+// this will flatten the "characteristics" and "colors" subfields into Person
+// serializes to: {height, weight, eyeColor, skinColor, hairColor}
+template <>
+inline constexpr jacinth::obj jacinth::meta<Person> = {
+    jacinth::flatten("characteristics", "colors"),
+};
+
+// meta specs applied to the flattened structs will still apply!
+template <>
+inline constexpr jacinth::obj jacinth::meta<Colors> = {
+    jacinth::rename("eyes", "eyeColor"),
+    jacinth::rename("skin", "skinColor"),
+    jacinth::rename("hair", "hairColor"),
+};
+```
+
+A `Person` struct will then output as:
+
+```json
+{
+    "height": 75.5,
+    "weight": 196.3,
+    "eyeColor": "blue",
+    "skinColor": "white",
+    "hairColor": "blond",
+    "name": "Marcus"
+}
+```
+
+Reading this JSON back will properly fill the `characteristics` and `colors` structs as well.
 
 ### Full Example
 
