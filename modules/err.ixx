@@ -28,10 +28,9 @@ export {
         std::string message(int c) const override;
     };
 
-    inline const detail::error cat{};
-
     inline const std::error_category &jacinth_category() noexcept
     {
+        static const detail::error cat{};
         return cat;
     }
 
