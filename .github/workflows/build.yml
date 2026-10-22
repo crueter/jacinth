@@ -45,6 +45,7 @@ jobs:
           if command -v pacman 2>&1 > /dev/null; then
             pacman -Syu --noconfirm --needed cmake ninja ${{ matrix.program }}
           elif command -v apt 2>&1 >/dev/null; then
+            apt update
             apt install -y cmake ninja-build gcc g++ clang clang++
           fi
 
