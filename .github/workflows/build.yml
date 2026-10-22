@@ -18,7 +18,7 @@ jobs:
         id: matrix
         run: |
           echo "matrix=$(./.ci/matrix.sh)" >> "$GITHUB_OUTPUT"
-          tools/matrix.sh
+          .ci/matrix.sh
 
   build:
     needs: matrix
