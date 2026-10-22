@@ -42,10 +42,10 @@ REFL='true false'
 
 # runs-on=arch
 WIN_RO="windows-latest=amd64 windows-11-arm=aarch64"
-DEBIAN_RO="debian-26.04=amd64 debian-26.04-arm=aarch64"
+DEBIAN_RO="ubuntu-26.04=amd64 ubuntu-26.04-arm=aarch64"
 
 # ALARM is stuck on GCC 16.1.1 which has a severe bug that makes compilation impossible
-ARCH_REFL_RO="debian-26.04=amd64"
+ARCH_REFL_RO="ubuntu-26.04=amd64"
 ARCH_RO="$DEBIAN_RO"
 UCRT_RO="windows-latest=amd64"
 CLANGARM_RO="windows-11-arm=aarch64"
