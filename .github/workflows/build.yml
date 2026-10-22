@@ -81,6 +81,9 @@ jobs:
           case "${{ matrix.program }}" in
             # gcc is already default where needed
             msvc|gcc) ;;
+            gcc-16)
+              cc=gcc-16
+              cxx=g++-16 ;;
             clang-cl)
               cc=clang-cl
               cxx=clang-cl ;;
