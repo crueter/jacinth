@@ -28,18 +28,18 @@ void test_span()
     std::array<double, 3> vals = {1.5, 2.5, 3.5};
 
     SpanWriteStruct s = {"SpanWriteStruct", vals};
-    const std::string s_expect = R"({"label":"SpanWriteStruct","values":[1.5,2.5,3.5]})";
+    const auto s_expect = R"({"label":"SpanWriteStruct","values":[1.5,2.5,3.5]})";
     tests::check_match("static-extent span struct", jacinth::json::dump(s), s_expect);
 
     std::span<const double> dynamic(vals);
-    const std::string expect = R"([1.5,2.5,3.5])";
+    const auto expect = R"([1.5,2.5,3.5])";
     tests::check_match("dynamic-extent span", jacinth::json::dump(dynamic), expect);
 }
 
 void test_array()
 {
     const ArrayStruct s = {"ArrayStruct", {10.5, 6.7, 988.43, -10000000000}};
-    const std::string expect =
+    const auto expect =
         R"({"label":"ArrayStruct","values":[10.5,6.7,988.43,-10000000000.0]})";
     tests::check_match("std::array", jacinth::json::dump(s), expect);
 
@@ -55,7 +55,7 @@ void test_initlist()
     json["creator"] = "crueter";
     json["features"] = {"Modules", "Reflection", "OOP API"};
 
-    const std::string expect =
+    const auto expect =
         R"({"name":"Jacinth","creator":"crueter","features":["Modules","Reflection","OOP API"]})";
     tests::check_match("initializer list", json.dump(), expect);
 }
@@ -67,7 +67,7 @@ void test_vecdump()
     tests::check_match("vector<float> roundtrip", back, vec);
 
     const std::vector<std::string> svec = {"Hello", "Hi", "Hey", "Heyo", "Hola", "Bonjour"};
-    const std::string expect = R"(["Hello","Hi","Hey","Heyo","Hola","Bonjour"])";
+    const auto expect = R"(["Hello","Hi","Hey","Heyo","Hola","Bonjour"])";
     tests::check_match("string vector", jacinth::json::dump(svec), expect);
 
     std::vector<std::string> sback = jacinth::json::read(expect);
@@ -79,7 +79,7 @@ void test_nestarray()
     jacinth::json json;
     json["hello"]["nested"][3] = 15.0;
 
-    const std::string expect = R"({"hello":{"nested":[null,null,null,15.0]}})";
+    const auto expect = R"({"hello":{"nested":[null,null,null,15.0]}})";
     tests::check_match("nested array", json.dump(), expect);
     tests::check_match("nested array read", json["hello"]["nested"][3].get<double>(), 15.0);
 }

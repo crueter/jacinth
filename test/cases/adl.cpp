@@ -29,11 +29,11 @@ void test_adl()
 {
     CustomStruct s = {"CustomStruct Test"};
 
-    const std::string expect = R"({"derived":"Derived value from to_json: CustomStruct Test"})";
+    const auto expect = R"({"derived":"Derived value from to_json: CustomStruct Test"})";
     tests::check_match("CustomStruct to_json", jacinth::json::dump(s), expect);
 
-    const std::string json_str = "{\"name\": \"CustomStruct JSON\"}";
-    const std::string from_expect = R"(Derived value from from_json: CustomStruct JSON)";
+    const auto json_str = "{\"name\": \"CustomStruct JSON\"}";
+    const auto from_expect = R"(Derived value from from_json: CustomStruct JSON)";
     CustomStruct newCustom = jacinth::json::read(json_str);
     tests::check_match("CustomStruct from_json", newCustom.name, from_expect);
 }

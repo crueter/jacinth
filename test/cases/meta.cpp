@@ -72,7 +72,8 @@ void test_write(std::string_view data)
 
     const auto dumped = jacinth::json::dump(room, {.pretty = true});
 
-    tests::check_match("data", std::string(data), dumped);
+    tests::check_match("data", tests::normalize_newlines(data),
+                       tests::normalize_newlines(dumped));
 }
 
 // ========================= //
@@ -114,24 +115,16 @@ inline constexpr jacinth::obj jacinth::meta<Colors> = {
 void test_flatten(std::string_view data) {
     const Person person = jacinth::doc::read(data);
 
-    std::println("Person {}", person.name);
-    std::println("  Colors:");
-    std::println("    Skin: {}", person.colors.skin);
-    std::println("    Eyes: {}", person.colors.eyes);
-    std::println("    Hair: {}", person.colors.hair);
-    std::println("  Physical Characteristics:");
-    std::println("    Height: {}in", person.characteristics.height);
-    std::println("    Weight: {}lbs", person.characteristics.weight);
-
-    tests::check_match("Name", person.name, std::string("Marcus"));
-    tests::check_match("Skin", person.colors.skin, std::string("white"));
-    tests::check_match("Eyes", person.colors.eyes, std::string("blue"));
-    tests::check_match("Hair", person.colors.hair, std::string("blond"));
+    tests::check_match("Name", person.name, "Marcus");
+    tests::check_match("Skin", person.colors.skin, "white");
+    tests::check_match("Eyes", person.colors.eyes, "blue");
+    tests::check_match("Hair", person.colors.hair, "blond");
     tests::check_match("Height", person.characteristics.height, 75.5);
     tests::check_match("Weight", person.characteristics.weight, 196.3);
 
     const auto dumped = jacinth::json::dump(person, {.pretty=true});
-    tests::check_match("data", std::string(data), dumped);
+    tests::check_match("data", tests::normalize_newlines(data),
+                       tests::normalize_newlines(dumped));
 }
 
 int main()

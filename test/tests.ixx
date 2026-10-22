@@ -1,6 +1,7 @@
 module;
 
 #include <string_view>
+#include <string>
 #include <print>
 #include <expected>
 #include <system_error>
@@ -13,6 +14,13 @@ export namespace tests {
 
 inline std::size_t failed = 0;
 inline std::size_t passed = 0;
+
+inline std::string normalize_newlines(std::string_view text)
+{
+    std::string normalized{text};
+    std::erase(normalized, '\r');
+    return normalized;
+}
 
 // TODO USE A REAL TEST FRAMEWORK
 inline bool check(std::string_view test, bool condition)
@@ -28,11 +36,10 @@ inline bool check(std::string_view test, bool condition)
     return condition;
 }
 
-template <typename T>
-void check_match(std::string_view test, T actual, T expect) {
+template <typename T, typename J>
+void check_match(std::string_view test, T actual, J expect) {
     if (!check(std::format("{} == {}", test, expect), actual == expect)) {
-        std::println("Expected: {}", expect);
-        std::println("Got     : {}", actual);
+        std::println("Got: {}", actual);
     }
 }
 
