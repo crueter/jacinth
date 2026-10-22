@@ -71,6 +71,7 @@ Thus, the following compilers are supported:
 - GCC >=16 (+ reflection)
   - Versions below 16.2 may be unstable with reflection enabled. Some distributions, such as Gentoo, are unaffected, but Arch Linux and Ubuntu are known to be affected.
 - Clang >= 19
+  - This does NOT mean that Debian 13 is supported! Your distribution must have libstdc++15 or newer; Debian 13 is stuck on 14.
 - MSVC >= 2026, or clang-cl with MSVC >= 2022
   - Technically, 2022 supports all necessary features, but is unable to compile Boost.PFR due to ICE bugs.
   - If you need to stay on 2022, use clang-cl.

@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 # Windows: msvc, clang-cl, msys2 gcc (amd64 only) + clang
-# Linux: ubuntu, arch; gcc, clang
+# Linux: ubuntu, arch; gcc, clang, clang-19
 # macOS: appleclang, homebrew clang
 
 matrix() {
@@ -23,7 +23,6 @@ container() {
 WIN="$(matrix "Windows")"
 WIN2022="$(matrix "Windows 2022")"
 
-DEBIAN="$(container "Debian 13" debian:trixie)"
 UBUNTU_LTS="$(container "Ubuntu 26.04" ubuntu:26.04)"
 UBUNTU_STABLE="$(container "Ubuntu 26.10" ubuntu:26.10)"
 
@@ -39,6 +38,7 @@ GCC='gcc'
 GCC16='gcc-16'
 GCC_CLANG='gcc clang'
 CLANG='clang'
+CLANG19='clang-19'
 APPLE_CLANG='brew-clang'
 
 # broken, appleclang does not yet support modules
@@ -100,10 +100,8 @@ programs "$UCRT64" "$UCRT_RO" "$GCC" "$REFL"
 programs "$UCRT64" "$UCRT_RO" "$CLANG"
 programs "$CLANGARM64" "$CLANGARM_RO" "$CLANG"
 
-# debian
-programs "$DEBIAN" "$UBUNTU_RO" "$CLANG"
-
 # ubuntu
+programs "$UBUNTU_LTS" "$UBUNTU_RO" "$CLANG19"
 programs "$UBUNTU_LTS" "$UBUNTU_RO" "$CLANG"
 programs "$UBUNTU_STABLE" "$UBUNTU_RO" "$GCC16" "$REFL"
 programs "$UBUNTU_STABLE" "$UBUNTU_RO" "$CLANG"
