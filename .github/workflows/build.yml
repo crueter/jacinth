@@ -46,7 +46,14 @@ jobs:
             pacman -Syu --noconfirm --needed cmake ninja ${{ matrix.program }}
           elif command -v apt 2>&1 >/dev/null; then
             apt update
-            apt install -y cmake ninja-build gcc-16 g++-16 clang clang-17
+            apt install -y cmake ninja-build
+
+            case "${{ matrix.program }}" in
+              gcc) apt install -y gcc g++ ;;
+              gcc-16) apt install -y gcc-16 g++-16 ;;
+              clang) apt install -y clang ;;
+              clang-17) apt install -y clang-17 ;;
+            esac
           fi
 
       - name: Install Packages (macOS)
@@ -66,7 +73,7 @@ jobs:
             toolchain:p cmake:p ninja:p clang:p
 
       - name: Setup MSVC
-        if: matrix.name == 'Windows'
+        if: matrix.program == 'clang-cl' || matrix.program == 'cl'
         uses: crueter/setup-msvc-dev@master
 
       - name: Install LLVM/Clang
