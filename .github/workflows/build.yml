@@ -46,7 +46,7 @@ jobs:
             pacman -Syu --noconfirm --needed cmake ninja ${{ matrix.program }}
           elif command -v apt 2>&1 >/dev/null; then
             apt update
-            apt install -y cmake ninja-build gcc g++ clang clang++
+            apt install -y cmake ninja-build gcc g++ clang
           fi
 
       - name: Install Packages (macOS)
