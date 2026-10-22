@@ -4,6 +4,7 @@
 #include <span>
 #include <string_view>
 #include <vector>
+#include <array>
 
 import jacinth;
 import tests;
