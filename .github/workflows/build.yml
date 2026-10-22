@@ -39,14 +39,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Install Packages (Container)
-        if: matrix.container
+      - name: Install Packages (Linux)
+        if: runner.os == 'Linux'
         run: |
           if command -v pacman 2>&1 > /dev/null; then
             pacman -Syu --noconfirm --needed cmake ninja ${{ matrix.program }}
           elif command -v apt 2>&1 >/dev/null; then
-            apt update
-            apt install -y cmake ninja-build gcc g++ clang
+            sudo apt update
+            sudo apt install -y cmake ninja-build gcc-16 g++-16 clang
           fi
 
       - name: Install Packages (macOS)

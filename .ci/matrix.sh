@@ -30,7 +30,7 @@ CLANGARM64="$(msys "MSYS2 CLANGARM64" CLANGARM64)"
 
 CL='msvc clang-cl'
 GCC='gcc'
-GCC16='gcc-16'
+GCC16_CLANG='gcc-16 clang'
 GCC_CLANG='gcc clang'
 CLANG='clang'
 APPLE_CLANG='brew-clang'
@@ -91,7 +91,7 @@ programs "$UCRT64" "$UCRT_RO" "$CLANG"
 programs "$CLANGARM64" "$CLANGARM_RO" "$CLANG"
 
 # ubuntu
-programs "$UBUNTU" "$UBUNTU_RO" "$GCC_CLANG"
+programs "$UBUNTU" "$UBUNTU_RO" "$GCC16_CLANG"
 
 # arch
 programs "$ARCH" "$ARCH_RO" "$CLANG"
