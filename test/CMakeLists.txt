@@ -23,9 +23,14 @@ target_sources(tests PUBLIC
     FILE_SET tests TYPE CXX_MODULES FILES tests.ixx)
 
 target_link_libraries(tests PUBLIC jacinth::jacinth)
-target_compile_options(tests PUBLIC
-    -Werror=unused-result -Wall -Wextra -Werror
-    -Wno-c23-extensions)
+if (MSVC)
+    target_compile_options(tests PUBLIC
+        /W4 /WX /we4834)
+else()
+    target_compile_options(tests PUBLIC
+        -Werror=unused-result -Wall -Wextra -Werror
+        -Wno-c23-extensions)
+endif()
 
 set(TESTS meta numvec errors array adl move release map cars)
 
