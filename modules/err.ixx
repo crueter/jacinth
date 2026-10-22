@@ -28,11 +28,7 @@ export {
         std::string message(int c) const override;
     };
 
-    inline const std::error_category &jacinth_category() noexcept
-    {
-        static const detail::error cat{};
-        return cat;
-    }
+    const std::error_category &jacinth_category() noexcept;
 
     } // namespace detail
 
@@ -49,6 +45,12 @@ export {
 
 namespace jacinth::detail
 {
+const std::error_category &jacinth_category() noexcept
+{
+    static const detail::error cat{};
+    return cat;
+}
+
 const char *error::name() const noexcept
 {
     return "jacinth";
