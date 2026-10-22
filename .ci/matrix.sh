@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 # Windows: msvc, clang-cl, msys2 gcc (amd64 only) + clang
-# Linux: ubuntu, arch; gcc, clang
+# Linux: debian, arch; gcc, clang
 # macOS: appleclang, homebrew clang
 
 matrix() {
@@ -21,7 +21,7 @@ container() {
 }
 
 WIN="$(matrix "Windows")"
-UBUNTU="$(matrix "Ubuntu")"
+DEBIAN="$(container "Debian" debian:trixie)"
 ARCH="$(container "Arch Linux" ghcr.io/pkgforge-dev/archlinux:latest)"
 MACOS="$(matrix "macOS")"
 
@@ -42,8 +42,11 @@ REFL='true false'
 
 # runs-on=arch
 WIN_RO="windows-latest=amd64 windows-11-arm=aarch64"
-UBUNTU_RO="ubuntu-26.04=amd64 ubuntu-26.04-arm=aarch64"
-ARCH_RO="$UBUNTU_RO"
+DEBIAN_RO="debian-26.04=amd64 debian-26.04-arm=aarch64"
+
+# ALARM is stuck on GCC 16.1.1 which has a severe bug that makes compilation impossible
+ARCH_REFL_RO="debian-26.04=amd64"
+ARCH_RO="$DEBIAN_RO"
 UCRT_RO="windows-latest=amd64"
 CLANGARM_RO="windows-11-arm=aarch64"
 MACOS_RO="macos-latest=aarch64"
@@ -86,12 +89,12 @@ programs "$UCRT64" "$UCRT_RO" "$GCC" "$REFL"
 programs "$UCRT64" "$UCRT_RO" "$CLANG"
 programs "$CLANGARM64" "$CLANGARM_RO" "$CLANG"
 
-# ubuntu
-programs "$UBUNTU" "$UBUNTU_RO" "$GCC_CLANG"
+# debian
+programs "$DEBIAN" "$DEBIAN_RO" "$GCC_CLANG"
 
 # arch
 programs "$ARCH" "$ARCH_RO" "$CLANG"
-programs "$ARCH" "$ARCH_RO" "$GCC" "$REFL"
+programs "$ARCH" "$ARCH_REFL_RO" "$GCC" "$REFL"
 
 # macos
 programs "$MACOS" "$MACOS_RO" "$APPLE_CLANG"
