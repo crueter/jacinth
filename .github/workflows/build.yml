@@ -39,9 +39,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Install Packages (Arch Linux)
+      - name: Install Packages (Container)
         if: matrix.container
-        run: pacman -Syu --noconfirm --needed cmake ninja ${{ matrix.program }}
+        run:
+          if command -v pacman >/dev/null 2>&1; then
+            pacman -Syu --noconfirm --needed cmake ninja ${{ matrix.program }}
+          elif command -v apt >/dev/null 2>&1; then
+            apt install -y cmake ninja-build gcc g++ clang clang++
+          fi
 
       - name: Install Packages (macOS)
         if: runner.os == 'macOS'
