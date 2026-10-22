@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: Copyright 2026 crueter
 // SPDX-License-Identifier: MIT
 
-#include <optional>
-#include <string_view>
-#include <map>
-#include <cstdint>
 #include <array>
+#include <cstdint>
+#include <map>
+#include <optional>
+#include <string>
+#include <string_view>
 #include <system_error>
 #include <vector>
 
@@ -45,10 +46,6 @@ struct MapStruct {
 };
 
 // [WARNING: MOSTLY AI SLOP]
-
-static const std::string release_data = {
-    #embed "../data/release.json"
-};
 
 void test_invalid(std::string_view data)
 {
@@ -127,8 +124,8 @@ void test_scalar()
     // container element type errors
     tests::check_errc("vector<int> from [1, \"two\"]", v.try_get<std::vector<int>>("badarr"),
                       jacinth::errc::type_mismatch);
-    tests::check_errc("array<float,2> from [1, \"two\"]",
-                      v.try_get<std::array<float, 2>>("badarr"), jacinth::errc::type_mismatch);
+    tests::check_errc("array<float,2> from [1, \"two\"]", v.try_get<std::array<float, 2>>("badarr"),
+                      jacinth::errc::type_mismatch);
 
     // optionals: present / null / missing all succeed
     auto opt_good = v.try_get<std::optional<int>>("opt_good");
@@ -138,30 +135,33 @@ void test_scalar()
     tests::check("optional null value", opt_null.has_value() && !opt_null->has_value());
     auto opt_missing = v.try_get<std::optional<int>>("nope");
     tests::check("optional missing key", opt_missing.has_value() && !opt_missing->has_value());
-    tests::check_errc("optional int from string",
-                      v.try_get<std::optional<std::string>>("opt_good"),
+    tests::check_errc("optional int from string", v.try_get<std::optional<std::string>>("opt_good"),
                       jacinth::errc::type_mismatch);
 }
 
-void test_errc()
+void test_errc(std::string_view data)
 {
     // error_code ergonomics: == errc and category exposure
     auto bad = jacinth::doc::try_read("nope");
     tests::check("error_code == errc comparison",
                  !bad.has_value() && bad.error() == jacinth::errc::invalid_json);
-    tests::check_match("error category name",
-                       std::string(bad.error().category().name()), std::string("jacinth"));
+    tests::check_match("error category name", std::string(bad.error().category().name()),
+                       std::string("jacinth"));
     tests::check("error message non-empty", !bad.error().message().empty());
-    auto missing = jacinth::doc::try_read<Car>(release_data);
+    auto missing = jacinth::doc::try_read<Car>(data);
     tests::check("error_code != errc comparison", missing.error() != jacinth::errc::invalid_json);
     tests::check("missing_value comparison", missing.error() == jacinth::errc::missing_value);
 }
 
 int main()
 {
-    test_invalid(release_data);
+    const std::string release = {
+#include "release_json.inc"
+    };
+
+    test_invalid(release);
     test_scalar();
-    test_errc();
+    test_errc(release);
 
     tests::exit();
 }

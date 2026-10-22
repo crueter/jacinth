@@ -50,7 +50,7 @@ void test_cars(std::string_view data)
 int main()
 {
     const std::string data = {
-#embed "../data/cars.json"
+#include "cars_json.inc"
     };
 
     test_cars(data);

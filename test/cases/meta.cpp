@@ -56,12 +56,10 @@ void test_read(std::string_view data)
         std::println("    {}", m.username);
     }
 
-    tests::check_match("Room title", room.title,
-                       std::string("BETA 1.7.3 AWESOME SERVER"));
+    tests::check_match("Room title", room.title, std::string("BETA 1.7.3 AWESOME SERVER"));
     tests::check_match("Room game", room.game.name, std::string("Minecraft"));
     tests::check_match("Room member size", room.members.size(), std::size_t(4));
-    tests::check_match("Room owner", room.members[0].username,
-                       std::string("crueter"));
+    tests::check_match("Room owner", room.members[0].username, std::string("crueter"));
     tests::check_match("Room ID", room.id, uint64_t(0));
     tests::check("Room has no creation time", room.creationTime.empty());
 }
@@ -72,8 +70,7 @@ void test_write(std::string_view data)
 
     const auto dumped = jacinth::json::dump(room, {.pretty = true});
 
-    tests::check_match("data", tests::normalize_newlines(data),
-                       tests::normalize_newlines(dumped));
+    tests::check_match("data", tests::normalize_newlines(data), tests::normalize_newlines(dumped));
 }
 
 // ========================= //
@@ -112,7 +109,8 @@ inline constexpr jacinth::obj jacinth::meta<Colors> = {
     jacinth::rename("hair", "hairColor"),
 };
 
-void test_flatten(std::string_view data) {
+void test_flatten(std::string_view data)
+{
     const Person person = jacinth::doc::read(data);
 
     tests::check_match("Name", person.name, "Marcus");
@@ -122,19 +120,18 @@ void test_flatten(std::string_view data) {
     tests::check_match("Height", person.characteristics.height, 75.5);
     tests::check_match("Weight", person.characteristics.weight, 196.3);
 
-    const auto dumped = jacinth::json::dump(person, {.pretty=true});
-    tests::check_match("data", tests::normalize_newlines(data),
-                       tests::normalize_newlines(dumped));
+    const auto dumped = jacinth::json::dump(person, {.pretty = true});
+    tests::check_match("data", tests::normalize_newlines(data), tests::normalize_newlines(dumped));
 }
 
 int main()
 {
     const std::string room = {
-        #embed "../data/room.json"
+#include "room_json.inc"
     };
 
     const std::string person = {
-        #embed "../data/person.json"
+#include "person_json.inc"
     };
 
     // Read

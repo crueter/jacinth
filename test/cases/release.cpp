@@ -88,7 +88,7 @@ void test_direct()
 int main()
 {
     const std::string data = {
-#embed "../data/release.json"
+#include "release_json.inc"
     };
 
     test_refl(data);

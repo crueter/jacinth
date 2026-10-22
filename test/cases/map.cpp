@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Copyright 2026 crueter
 // SPDX-License-Identifier: MIT
 
+#include <cstdint>
 #include <map>
 #include <string>
-#include <cstdint>
 
 import jacinth;
 import tests;

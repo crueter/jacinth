@@ -42,11 +42,24 @@ if (MINGW)
     endif()
 endif()
 
+# json data
+set(JSONS cars person release room)
+set(JACINTH_TEST_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+file(MAKE_DIRECTORY "${JACINTH_TEST_GENERATED_DIR}")
+
+foreach(json ${JSONS})
+    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/data/${json}.json" json_content)
+    file(WRITE "${JACINTH_TEST_GENERATED_DIR}/${json}_json.inc"
+        "R\"JSON(${json_content})JSON\"\n")
+endforeach()
+
+# test cases
 set(TESTS meta numvec errors array adl move release map cars)
 
 foreach(test ${TESTS})
     add_executable(${test} cases/${test}.cpp)
     target_link_libraries(${test} PRIVATE tests)
+    target_include_directories(${test} PRIVATE "${JACINTH_TEST_GENERATED_DIR}")
 
     add_test(NAME ${test} COMMAND ${test})
 endforeach()
