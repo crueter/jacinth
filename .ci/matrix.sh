@@ -21,7 +21,8 @@ container() {
 }
 
 WIN="$(matrix "Windows")"
-UBUNTU="$(matrix "Ubuntu")"
+UBUNTU_LTS="$(matrix "Ubuntu 26.04")"
+UBUNTU_STABLE="$(matrix "Ubuntu 26.10")"
 ARCH="$(container "Arch Linux" ghcr.io/pkgforge-dev/archlinux:latest)"
 MACOS="$(matrix "macOS")"
 
@@ -30,7 +31,7 @@ CLANGARM64="$(msys "MSYS2 CLANGARM64" CLANGARM64)"
 
 CL='msvc clang-cl'
 GCC='gcc'
-GCC16_CLANG='gcc-16 clang'
+GCC16='gcc-16'
 GCC_CLANG='gcc clang'
 CLANG='clang'
 APPLE_CLANG='brew-clang'
@@ -91,7 +92,9 @@ programs "$UCRT64" "$UCRT_RO" "$CLANG"
 programs "$CLANGARM64" "$CLANGARM_RO" "$CLANG"
 
 # ubuntu
-programs "$UBUNTU" "$UBUNTU_RO" "$GCC16_CLANG"
+programs "$UBUNTU_LTS" "$UBUNTU_RO" "$CLANG"
+programs "$UBUNTU_STABLE" "$UBUNTU_RO" "$GCC16" "$REFL"
+programs "$UBUNTU_STABLE" "$UBUNTU_RO" "$CLANG"
 
 # arch
 programs "$ARCH" "$ARCH_RO" "$CLANG"
