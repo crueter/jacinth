@@ -20,9 +20,9 @@ Jacinth is (currently) a relatively thin OOP wrapper around the very fast [yyjso
 - C++20 module support
 - Extremely low executable size overhead
   - A basic `std::println("Hello World");` program takes up 131K with `-O3`
-  - Jacinth's test executable takes up just 200-250K with `-O3`
+  - Jacinth's test executables take up just 400K with `-O3`
 - Low compilation speed overhead
-  - On a Zen 4 desktop CPU, Jacinth's test executable compiles and links in 4 seconds
+  - On a Zen 4 desktop CPU, Jacinth's test executables compile and link in just 2.5 seconds
   - A similar program made with Glaze takes around 5.5 seconds
   - This is particularly helped by Jacinth supporting C++20 modules, which makes compilation significantly faster
 - Super easy integration into existing projects
