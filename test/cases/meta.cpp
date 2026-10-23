@@ -99,7 +99,7 @@ struct Person {
 };
 
 // this will flatten the "characteristics" and "colors" subfields into Person
-// serializes to: {height, weight, eyeColor, skinColor, hairColor}
+// serializes to: {height, weight, eyeColor, skinColor, hairColor, name}
 template <>
 inline constexpr jacinth::obj jacinth::meta<Person> = {
     jacinth::flatten("characteristics", "colors"),
@@ -128,6 +128,16 @@ void test_flatten(std::string_view data)
     tests::check_match("data", tests::normalize_newlines(data), tests::normalize_newlines(dumped));
 }
 
+void test_overwrite()
+{
+    jacinth::json json;
+    json["obj"]["stale"] = 1;
+    json["obj"] = PhysicalCharacteristics{75.5, 196.3};
+
+    tests::check_match("aggregate assignment replaces object", json["obj"].dump(),
+                       R"({"height":75.5,"weight":196.3})");
+}
+
 int main()
 {
     const std::string room = {
@@ -146,6 +156,9 @@ int main()
 
     // Flatten
     test_flatten(person);
+
+    // Overwrite
+    test_overwrite();
 
     tests::exit();
 }

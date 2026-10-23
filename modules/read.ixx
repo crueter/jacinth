@@ -499,6 +499,9 @@ export {
                         return;
 
                     if constexpr (field_plan.flatten) {
+                        using Child = std::decay_t<decltype(sub_field)>;
+                        static_assert(std::is_aggregate_v<Child> && !is_array_v<Child>,
+                                      "jacinth::flatten requires a struct field");
                         result = parseValue(val, sub_field);
                         return;
                     }

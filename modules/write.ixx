@@ -4,13 +4,10 @@
 module;
 
 #include <expected>
-#include <map>
 #include <optional>
-#include <set>
 #include <string>
 #include <system_error>
 #include <utility>
-#include <vector>
 
 // force yyjson to have external linkage
 #define yyjson_api_inline yyjson_inline
@@ -30,7 +27,8 @@ export import :spec;
 export import :read;
 
 export template <typename T>
-jacinth::errc writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field);
+jacinth::errc writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field,
+                         bool append = false);
 
 export namespace jacinth
 {
@@ -520,7 +518,8 @@ public:
 
 // TODO: handle variant?
 export template <typename T>
-jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field)
+jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field,
+                                bool append)
 {
     if (!val)
         return jacinth::errc::missing_value;
@@ -539,7 +538,7 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
     }
 
     else if constexpr (std::is_same_v<FieldType, char *> ||
-                         std::is_same_v<FieldType, const char *>) {
+                       std::is_same_v<FieldType, const char *>) {
         if (yyjson_mut_val *str = yyjson_mut_strcpy(doc, field); str) {
             val->tag = str->tag;
             val->uni = str->uni;
@@ -663,7 +662,8 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
 
     // nested structs, etc
     else if constexpr (std::is_aggregate_v<FieldType>) {
-        if (!yyjson_mut_is_obj(val))
+        // flattening appends to an existing object, everything else replaces it
+        if (!append || !yyjson_mut_is_obj(val))
             yyjson_mut_set_obj(val);
 
         jacinth::errc result{};
@@ -685,7 +685,10 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
                     return;
 
                 if constexpr (field_plan.flatten) {
-                    result = writeValue(doc, val, value);
+                    using Child = std::decay_t<decltype(value)>;
+                    static_assert(std::is_aggregate_v<Child> && !is_array_v<Child>,
+                                  "jacinth::flatten requires a struct field");
+                    result = writeValue(doc, val, value, true);
                     return;
                 }
 

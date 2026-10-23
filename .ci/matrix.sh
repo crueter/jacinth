@@ -1,5 +1,8 @@
 #!/bin/sh -e
 
+# SPDX-FileCopyrightText: Copyright 2026 crueter
+# SPDX-License-Identifier: MIT
+
 # Windows: msvc, clang-cl, msys2 gcc (amd64 only) + clang
 # Linux: ubuntu, arch; gcc, clang, clang-19
 # macOS: appleclang, homebrew clang

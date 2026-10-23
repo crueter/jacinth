@@ -48,9 +48,14 @@ set(JACINTH_TEST_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 file(MAKE_DIRECTORY "${JACINTH_TEST_GENERATED_DIR}")
 
 foreach(json ${JSONS})
-    file(READ "${CMAKE_CURRENT_SOURCE_DIR}/data/${json}.json" json_content)
+    set(file "${CMAKE_CURRENT_SOURCE_DIR}/data/${json}.json")
+
+    file(READ "${file}" json_content)
     file(WRITE "${JACINTH_TEST_GENERATED_DIR}/${json}_json.inc"
         "R\"JSON(${json_content})JSON\"\n")
+
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${file}")
+
 endforeach()
 
 # test cases

@@ -4,13 +4,9 @@
 module;
 
 #include <array>
-#include <map>
-#include <set>
-#include <string>
 #include <string_view>
 #include <tuple>
 #include <type_traits>
-#include <vector>
 
 #ifdef JACINTH_USE_REFLECTION
 #include <meta>
@@ -115,7 +111,6 @@ constexpr auto flatten(K... keys)
 {
     return flatten_entry<sizeof...(K)>{.keys = {std::string_view(keys)...}};
 }
-
 
 template <class... E>
 struct obj {
@@ -251,7 +246,6 @@ struct meta_resolver {
 
         return found;
     }
-
 };
 
 // compile-time meta resolution
