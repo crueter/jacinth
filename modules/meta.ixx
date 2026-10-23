@@ -104,7 +104,7 @@ struct flatten_entry {
  * Flatten a struct child's members onto this JSON object.
  * e.g. a struct with a child struct with 3 members will have those three
  * members placed into the root of the parent struct's JSON document.
- * THIS DOES NOT AFFECT NON-STRUCT TYPES!
+ * Trying to flatten a non-struct type will result in a compile error.
  */
 template <class... K>
 constexpr auto flatten(K... keys)

@@ -4,8 +4,8 @@
 # Only supported on GCC (16 is already the minimum, see CompilerChecks)
 if (NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     message(FATAL_ERROR
-        "Reflection is only supported on GCC. "
-        "Turn off JACINTH_USE_REFLECTION.")
+        "Reflection is only supported on GCC; "
+        "turn off JACINTH_USE_REFLECTION.")
 endif()
 
 # 16.1 and below are unstable, but may work on e.g. Gentoo
