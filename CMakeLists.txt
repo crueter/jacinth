@@ -5,7 +5,10 @@ cmake_minimum_required(VERSION 3.31)
 
 project(jacinth VERSION 0.1.0 LANGUAGES C CXX)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 include(CMakeDependentOption)
+include(CompilerChecks)
 
 # options
 option(JACINTH_BUILD_TESTS "Build Jacinth's test application"
@@ -34,9 +37,7 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # TODO: better control flow
-if (JACINTH_USE_REFLECTION)
-    set(CMAKE_CXX_STANDARD 26)
-else()
+if (NOT JACINTH_USE_REFLECTION)
     # pfr
     if(JACINTH_USE_SYSTEM_PFR)
         find_package(Boost 1.87 REQUIRED COMPONENTS headers)
@@ -51,7 +52,8 @@ else()
         endif()
     elseif (NOT TARGET Boost::pfr)
         add_library(boost_pfr INTERFACE)
-        target_include_directories(boost_pfr INTERFACE externals/pfr/include)
+        target_include_directories(boost_pfr SYSTEM
+            INTERFACE externals/pfr/include)
         add_library(Boost::pfr ALIAS boost_pfr)
     endif()
 endif()
@@ -72,15 +74,13 @@ else()
     set(lib_type STATIC)
 endif()
 
-add_library(jacinth)
+add_library(jacinth ${lib_type})
 
 if (JACINTH_USE_REFLECTION)
-    target_compile_definitions(jacinth PUBLIC
-        $<BUILD_INTERFACE:JACINTH_USE_REFLECTION>)
-    target_compile_options(jacinth PUBLIC
-        $<BUILD_INTERFACE:$<$<COMPILE_LANGUAGE:CXX>:-freflection>>)
-    target_compile_features(jacinth PUBLIC
-        $<BUILD_INTERFACE:cxx_std_26>)
+    include(EnableReflection)
+    EnableReflection(jacinth)
+else()
+    target_link_libraries(jacinth PUBLIC Boost::pfr)
 endif()
 
 target_sources(jacinth PUBLIC
@@ -94,20 +94,12 @@ target_sources(jacinth PUBLIC
         modules/meta.ixx)
 
 target_link_libraries(jacinth PUBLIC yyjson)
-if (NOT JACINTH_USE_REFLECTION)
-    target_link_libraries(jacinth PUBLIC Boost::pfr)
-endif()
 
 add_library(jacinth::jacinth ALIAS jacinth)
 
 # ccache and sccache do not play very nicely with modules
 # This will be removed eventually
-get_target_property(launcher jacinth CXX_COMPILER_LAUNCHER)
-if ("${launcher}" MATCHES "ccache")
-    set_target_properties(jacinth PROPERTIES
-        CXX_COMPILER_LAUNCHER ""
-        C_COMPILER_LAUNCHER "")
-endif()
+include(DisableCCache)
 
 if (JACINTH_INSTALL)
     include(GNUInstallDirs)
@@ -140,5 +132,6 @@ if (JACINTH_INSTALL)
 endif()
 
 if (JACINTH_BUILD_TESTS)
+    enable_testing()
     add_subdirectory(test)
 endif()

@@ -5,6 +5,7 @@ module;
 
 #include <expected>
 #include <span>
+#include <string>
 #include <system_error>
 #include <type_traits>
 #include <utility>
@@ -150,7 +151,13 @@ public:
     // TODO: byte size? obj size?
     std::size_t size() const
     {
-        return yyjson_arr_size(m_val);
+        if (is_array()) {
+            return yyjson_arr_size(m_val);
+        } else if (is_object()) {
+            return yyjson_obj_size(m_val);
+        } else {
+            return 0;
+        }
     }
 
     bool is_object() const
@@ -490,6 +497,14 @@ export {
                     constexpr auto field_plan = plan.fields[Index];
                     if constexpr (!field_plan.emit)
                         return;
+
+                    if constexpr (field_plan.flatten) {
+                        using Child = std::decay_t<decltype(sub_field)>;
+                        static_assert(std::is_aggregate_v<Child> && !is_array_v<Child>,
+                                      "jacinth::flatten requires a struct field");
+                        result = parseValue(val, sub_field);
+                        return;
+                    }
 
                     constexpr auto name = field_plan.key;
                     yyjson_val *sub;

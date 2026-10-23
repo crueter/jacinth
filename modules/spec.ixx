@@ -8,6 +8,7 @@ module;
 #include <map>
 #include <optional>
 #include <span>
+#include <string_view>
 #include <vector>
 
 #include "yyjson.h"

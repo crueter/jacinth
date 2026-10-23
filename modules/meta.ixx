@@ -6,6 +6,7 @@ module;
 #include <array>
 #include <string_view>
 #include <tuple>
+#include <type_traits>
 
 #ifdef JACINTH_USE_REFLECTION
 #include <meta>
@@ -20,7 +21,7 @@ export namespace jacinth
 {
 
 // kind of entry
-enum class entry_kind { rename, include, exclude, from };
+enum class entry_kind { rename, include, exclude, from, flatten };
 
 struct rename_entry {
     static constexpr auto kind = entry_kind::rename;
@@ -93,6 +94,24 @@ constexpr auto from(std::string_view key, F accessor)
     return from_entry<F>{key, accessor};
 }
 
+template <std::size_t N>
+struct flatten_entry {
+    static constexpr auto kind = entry_kind::flatten;
+    std::array<std::string_view, N> keys;
+};
+
+/**
+ * Flatten a struct child's members onto this JSON object.
+ * e.g. a struct with a child struct with 3 members will have those three
+ * members placed into the root of the parent struct's JSON document.
+ * Trying to flatten a non-struct type will result in a compile error.
+ */
+template <class... K>
+constexpr auto flatten(K... keys)
+{
+    return flatten_entry<sizeof...(K)>{.keys = {std::string_view(keys)...}};
+}
+
 template <class... E>
 struct obj {
     constexpr obj() = default;
@@ -113,6 +132,7 @@ inline constexpr obj<> meta{};
 struct field_meta {
     std::string_view key;
     bool emit;
+    bool flatten;
 };
 
 // the actual resolver
@@ -136,7 +156,7 @@ struct meta_resolver {
         bool found = false;
 
         const auto check = [&](auto const &e) {
-            if constexpr (e.kind == entry_kind::include) {
+            if constexpr (std::decay_t<decltype(e)>::kind == entry_kind::include) {
                 have_include = true;
                 found = found || has_key(e, key);
             }
@@ -154,7 +174,7 @@ struct meta_resolver {
         bool found = false;
 
         const auto check = [&](auto const &e) {
-            if constexpr (e.kind == entry_kind::exclude)
+            if constexpr (std::decay_t<decltype(e)>::kind == entry_kind::exclude)
                 found = found || has_key(e, key);
         };
 
@@ -191,7 +211,7 @@ struct meta_resolver {
         std::string_view key = name;
 
         const auto check = [&](auto const &e) {
-            if constexpr (e.kind == entry_kind::rename)
+            if constexpr (std::decay_t<decltype(e)>::kind == entry_kind::rename)
                 if (e.field == name)
                     key = e.key;
         };
@@ -205,11 +225,26 @@ struct meta_resolver {
     static constexpr void for_each_from(Obj &obj, Fn &&fn)
     {
         const auto visit = [&](auto const &e) {
-            if constexpr (e.kind == entry_kind::from)
+            if constexpr (std::decay_t<decltype(e)>::kind == entry_kind::from)
                 fn(e.key, e.accessor(obj));
         };
 
         std::apply([&](auto const &...e) { (visit(e), ...); }, spec.entries);
+    }
+
+    // flatten
+    static constexpr bool flatten(std::string_view key)
+    {
+        bool found = false;
+
+        const auto check = [&](auto const &e) {
+            if constexpr (std::decay_t<decltype(e)>::kind == entry_kind::flatten)
+                found = found || has_key(e, key);
+        };
+
+        std::apply([&](auto const &...e) { (check(e), ...); }, spec.entries);
+
+        return found;
     }
 };
 
@@ -224,12 +259,13 @@ struct meta_plan {
 template <class T>
 consteval auto make_plan()
 {
-    constexpr auto names = meta_resolver<T>::field_names;
+    constexpr auto res = meta_resolver<T>();
+    constexpr auto names = res.field_names;
     meta_plan<T> p{};
 
     for (std::size_t i = 0; i < names.size(); ++i) {
-        const auto key = meta_resolver<T>::key_for(names[i]);
-        p.fields[i] = field_meta{key, meta_resolver<T>::emit(key)};
+        const auto key = res.key_for(names[i]);
+        p.fields[i] = field_meta{key, res.emit(key), res.flatten(key)};
     }
 
     return p;

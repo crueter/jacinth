@@ -9,8 +9,8 @@ Jacinth is a simple, low-overhead JSON library for C++23 and C++26 that provides
 Jacinth is (currently) a relatively thin OOP wrapper around the very fast [yyjson](https://github.com/ibireme/yyjson). It features:
 
 - Compile-time struct reflection, enabling serialization and deserialization of arbitrarily complex struct types with low overhead
-  - GCC 16 and up get access to the extremely powerful (and fast) [P2996 Reflection API](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p2996r13.html)
-  - Clang, MSVC, and GCC <=15 instead will use [Boost.PFR](https://www.boost.org/doc/libs/latest/doc/html/boost_pfr.html), which isn't as fast as C++26 reflection, but is very close.
+  - GCC gets access to the extremely powerful (and fast) [P2996 Reflection API](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p2996r13.html)
+  - Clang and MSVC instead will use [Boost.PFR](https://www.boost.org/doc/libs/latest/doc/html/boost_pfr.html), which isn't as fast as C++26 reflection, but is very close.
     - The included PFR is version 1.92, but anything newer than 1.80 or so should work.
 - A mutable nlohmann-like JSON object API (`jacinth::json`, `jacinth::mutable_value`)
 - A fast, lazy, on-demand parser for immutable objects (`jacinth::doc`, `jacinth::value`)
@@ -20,9 +20,9 @@ Jacinth is (currently) a relatively thin OOP wrapper around the very fast [yyjso
 - C++20 module support
 - Extremely low executable size overhead
   - A basic `std::println("Hello World");` program takes up 131K with `-O3`
-  - Jacinth's test executable takes up just 200-250K with `-O3`
+  - Jacinth's test executables take up just 400K with `-O3`
 - Low compilation speed overhead
-  - On a Zen 4 desktop CPU, Jacinth's test executable compiles and links in 4 seconds
+  - On a Zen 4 desktop CPU, Jacinth's test executables compile and link in just 2.5 seconds
   - A similar program made with Glaze takes around 5.5 seconds
   - This is particularly helped by Jacinth supporting C++20 modules, which makes compilation significantly faster
 - Super easy integration into existing projects
@@ -47,6 +47,38 @@ Jacinth is intentionally designed in a limited manner that makes it as easy to u
   - However, Jacinth is still plenty fast; writing is slightly slower, but reading is *faster* than yyjson! See [#Performance](#performance).
 - Singular API pattern
   - Jacinth intentionally implements several different API surfaces and patterns so you can choose which way works best. It's generally designed such that it can serve as a near drop-in replacement for nlohmann, while adding extra features to make your life even easier.
+
+## Compiler Support
+
+To use Jacinth, your C++ compiler and standard library *must* support, *at a minimum*:
+
+- [P1103 C++20 Modules](https://en.cppreference.com/cpp/language/modules)
+- [P0323 `std::expected`](https://en.cppreference.com/cpp/header/expected)
+
+The in-repo test suite has a few more requirements:
+
+- [P2286 Formatting Ranges](https://en.cppreference.com/cpp/utility/format/range_formatter)
+- [P2093 `std::print`](https://en.cppreference.com/cpp/header/print)
+
+Using C++26 compile-reflection instead of Boost.PFR also requires:
+
+- [P2996 Reflection](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p2996r13.html)
+- [P3491 `define_static_array`](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3491r3.html)
+- [P1306 Expansion Statements (`template for`)](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p1306r5.html)
+
+Thus, the following compilers are supported:
+
+- GCC >=16 (+ reflection)
+  - Versions below 16.2 may be unstable with reflection enabled. Some distributions, such as Gentoo, are unaffected, but Arch Linux and Ubuntu are known to be affected.
+- Clang >= 19
+  - This does NOT mean that Debian 13 is supported! Your distribution must have libstdc++15 or newer; Debian 13 is stuck on 14.
+- MSVC >= 2026, or clang-cl with MSVC >= 2022
+  - Technically, 2022 supports all necessary features, but is unable to compile Boost.PFR due to ICE bugs.
+  - If you need to stay on 2022, use clang-cl.
+
+Clang and MSVC do not support reflection at the time of writing.
+
+AppleClang is completely unsupported, so you will need to use Homebrew's Clang instead (`brew install llvm`, and pass `-DCMAKE_CXX_COMPILER=$(brew --prefix llvm)/bin` to CMake).
 
 ## Licensing
 
@@ -113,7 +145,7 @@ Jacinth can be used both as a system and a vendored target. It can be integrated
 
 Jacinth creates a `jacinth::jacinth` target, so you can link to Jacinth via `target_link_libraries(MyApp PRIVATE jacinth::jacinth)`. You usually shouldn't need Jacinth within your header files, so internal targets generally won't need `PUBLIC` propagation. Both the system and vendored targets provide a `JACINTH_USE_REFLECTION` option. Enabling this will add `-freflection` to your compile options, force the C++26 standard, and define `JACINTH_USE_REFLECTION` in the module.
 
-In order for Jacinth to properly compile and for `import jacinth;` to work, you MUST turn on `CMAKE_CXX_SCAN_FOR_MODULES`, and use a supported generator (e.g. Ninja or Visual Studio). Obviously you'll need a modern compiler too; GCC >=15, Clang >=19, and MSVC >=2022 should all work fine.
+In order for Jacinth to properly compile and for `import jacinth;` to work, you MUST turn on `CMAKE_CXX_SCAN_FOR_MODULES`, and use a supported generator. Ninja is recommended. For `clang-cl`, CMake 4.4 or newer is required and the Visual Studio generator is not supported. Obviously you'll need a modern compiler too; see [Compiler Support](#compiler-support).
 
 ### Adding Jacinth to your project
 
