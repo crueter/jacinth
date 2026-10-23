@@ -5,7 +5,6 @@
 #include <print>
 #include <string>
 #include <string_view>
-#include <vector>
 
 import jacinth;
 import tests;

@@ -78,6 +78,8 @@ Thus, the following compilers are supported:
 
 Clang and MSVC do not support reflection at the time of writing.
 
+AppleClang is completely unsupported, so you will need to use Homebrew's Clang instead (`brew install llvm`, and pass `-DCMAKE_CXX_COMPILER=$(brew --prefix llvm)/bin` to CMake).
+
 ## Licensing
 
 This is licensed under the MIT. You are free to use and modify this as you wish, but you ***must*** include the contents of the [`LICENSE`](./LICENSE) file somewhere in your application and source tree. Attribution that your program or library uses Jacinth is highly encouraged but not legally required.
