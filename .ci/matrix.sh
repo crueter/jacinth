@@ -55,8 +55,6 @@ WIN2022_RO="windows-2022=amd64"
 WIN_RO="windows-latest=amd64 windows-11-arm=aarch64"
 UBUNTU_RO="ubuntu-26.04=amd64 ubuntu-26.04-arm=aarch64"
 
-# ALARM is stuck on GCC 16.1.1 which has a severe bug that makes compilation impossible
-ARCH_REFL_RO="ubuntu-26.04=amd64"
 ARCH_RO="$UBUNTU_RO"
 UCRT_RO="windows-latest=amd64"
 CLANGARM_RO="windows-11-arm=aarch64"
@@ -111,7 +109,7 @@ programs "$UBUNTU_STABLE" "$UBUNTU_RO" "$CLANG"
 
 # arch
 programs "$ARCH" "$ARCH_RO" "$CLANG"
-programs "$ARCH" "$ARCH_REFL_RO" "$GCC" "$REFL"
+programs "$ARCH" "$ARCH_RO" "$GCC" "$REFL"
 
 # macos
 programs "$MACOS" "$MACOS_RO" "$APPLE_CLANG"
