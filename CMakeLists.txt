@@ -84,7 +84,8 @@ else()
 endif()
 
 target_sources(jacinth PUBLIC
-    FILE_SET jacinth TYPE CXX_MODULES FILES
+    FILE_SET jacinth TYPE CXX_MODULES
+    BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/modules FILES
         modules/jacinth.ixx
         modules/spec.ixx
         modules/write.ixx
