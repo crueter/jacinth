@@ -9,10 +9,10 @@ module;
 #include "boost/pfr/core_name.hpp"
 #endif
 
-module jacinth:boost;
+export module jacinth:boost;
 
 #ifndef JACINTH_USE_REFLECTION
-export namespace pfr {
+namespace pfr {
 
 using boost::pfr::for_each_field_with_name;
 using boost::pfr::names_as_array;
