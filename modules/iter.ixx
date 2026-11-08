@@ -12,7 +12,7 @@ export module jacinth:iter;
 
 import :read;
 import :write;
-import :yyjson;
+export import :yyjson;
 
 #ifdef JACINTH_USE_STD_MODULE
 import std;

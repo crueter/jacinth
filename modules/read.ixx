@@ -33,10 +33,10 @@ export import :err;
 export import :spec;
 export import :meta;
 
-import :yyjson;
+export import :yyjson;
 
 #ifndef JACINTH_USE_REFLECTION
-import :boost;
+export import :boost;
 #endif
 
 #ifdef JACINTH_USE_STD_MODULE

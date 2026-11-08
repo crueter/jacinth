@@ -18,7 +18,7 @@ module;
 export module jacinth:meta;
 
 #ifndef JACINTH_USE_REFLECTION
-import :boost;
+export import :boost;
 #endif
 
 #ifdef JACINTH_USE_STD_MODULE

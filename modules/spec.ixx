@@ -14,7 +14,7 @@ module;
 
 export module jacinth:spec;
 
-import :yyjson;
+export import :yyjson;
 
 #ifdef JACINTH_USE_STD_MODULE
 import std;
