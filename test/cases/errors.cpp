@@ -1,15 +1,18 @@
 // SPDX-FileCopyrightText: Copyright 2026 crueter
 // SPDX-License-Identifier: MIT
 
+#ifdef JACINTH_USE_STD_MODULE
+import std;
+#else
 #include <array>
 #include <cstdint>
 #include <map>
 #include <optional>
-#include <print>
 #include <string>
 #include <string_view>
 #include <system_error>
 #include <vector>
+#endif
 
 import jacinth;
 import tests;
@@ -43,7 +46,7 @@ struct Asset {
 
 struct MapStruct {
     std::string name;
-    std::map<std::string, uint32_t> values;
+    std::map<std::string, std::uint32_t> values;
 };
 
 // [WARNING: MOSTLY AI SLOP]

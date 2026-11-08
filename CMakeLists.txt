@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright 2026 crueter
 # SPDX-License-Identifier: MIT
 
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 3.31...4.5)
 
 project(jacinth VERSION 0.1.0 LANGUAGES C CXX)
 
@@ -11,22 +11,19 @@ include(CMakeDependentOption)
 include(CompilerChecks)
 
 # options
-option(JACINTH_BUILD_TESTS "Build Jacinth's test application"
-    ${PROJECT_IS_TOP_LEVEL})
-option(JACINTH_USE_REFLECTION
-    "Use C++26 reflection features instead of Boost.PFR" OFF)
-cmake_dependent_option(JACINTH_USE_SYSTEM_PFR
-    "Use system Boost.PFR instead of bundled" ${PROJECT_IS_TOP_LEVEL}
-    "NOT JACINTH_USE_REFLECTION" ON) # forcing to "on" enables install target
-option(JACINTH_USE_SYSTEM_YYJSON "Use system yyjson instead of bundled"
-    ${PROJECT_IS_TOP_LEVEL})
+option(JACINTH_BUILD_TESTS "Build Jacinth's test application" ${PROJECT_IS_TOP_LEVEL})
+option(JACINTH_USE_REFLECTION "Use C++26 reflection features instead of Boost.PFR" OFF)
+option(JACINTH_USE_SYSTEM_YYJSON "Use system yyjson instead of bundled" ${PROJECT_IS_TOP_LEVEL})
 
-if (JACINTH_USE_SYSTEM_PFR AND JACINTH_USE_SYSTEM_YYJSON)
-    option(JACINTH_INSTALL "Create a Jacinth install target"
-        ${PROJECT_IS_TOP_LEVEL})
-else()
-    set(JACINTH_INSTALL OFF)
-endif()
+cmake_dependent_option(JACINTH_USE_SYSTEM_PFR "Use system Boost.PFR instead of bundled"
+    ${PROJECT_IS_TOP_LEVEL} "NOT JACINTH_USE_REFLECTION" ON) # forcing to "on" enables install target
+
+cmake_dependent_option(JACINTH_INSTALL "Create a Jacinth install target" ${PROJECT_IS_TOP_LEVEL}
+    "JACINTH_USE_SYSTEM_PFR AND JACINTH_USE_SYSTEM_YYJSON" OFF)
+
+# import std support
+cmake_dependent_option(JACINTH_USE_STD_MODULE "Import the standard library as a module" ON
+    "CMAKE_VERSION GREATER_EQUAL 4.5" OFF)
 
 # cxx
 if (NOT DEFINED CMAKE_CXX_STANDARD OR "${CMAKE_CXX_STANDARD}" LESS "23")
@@ -68,19 +65,17 @@ else()
 endif()
 
 # jacinth module target
-if (BUILD_SHARED_LIBS)
-    set(lib_type SHARED)
-else()
-    set(lib_type STATIC)
-endif()
-
-add_library(jacinth ${lib_type})
+add_library(jacinth)
 
 if (JACINTH_USE_REFLECTION)
     include(EnableReflection)
     EnableReflection(jacinth)
 else()
     target_link_libraries(jacinth PUBLIC Boost::pfr)
+endif()
+
+if (JACINTH_USE_STD_MODULE)
+    target_compile_definitions(jacinth PUBLIC JACINTH_USE_STD_MODULE)
 endif()
 
 target_sources(jacinth PUBLIC

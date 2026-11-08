@@ -1,17 +1,20 @@
 // SPDX-FileCopyrightText: Copyright 2026 crueter
 // SPDX-License-Identifier: MIT
 
+#ifdef JACINTH_USE_STD_MODULE
+import std;
+#else
 #include <cstdint>
 #include <map>
-#include <print>
 #include <string>
+#endif
 
 import jacinth;
 import tests;
 
 struct MapStruct {
     std::string name;
-    std::map<std::string, uint32_t> values;
+    std::map<std::string, std::uint32_t> values;
 };
 
 void test_map()
