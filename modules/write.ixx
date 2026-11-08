@@ -11,6 +11,7 @@ module;
 #include <system_error>
 #include <utility>
 #include <cstdint>
+#include <type_traits>
 
 #ifdef JACINTH_USE_REFLECTION
 #include <meta>
