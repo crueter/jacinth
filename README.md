@@ -18,6 +18,7 @@ Jacinth is (currently) a relatively thin OOP wrapper around the very fast [yyjso
   - `to_json(jacinth::mutable_value json, const T& field)`
   - `from_json(const jacinth::value &json, T& field)`
 - C++20 module support
+  - CMake 4.5.0+ also gets access to `import std`
 - Extremely low executable size overhead
   - A basic `std::println("Hello World");` program takes up 131K with `-O3`
   - Jacinth's test executables take up just 400K with `-O3`
