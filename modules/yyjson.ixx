@@ -10,6 +10,8 @@ module;
 
 export module jacinth:yyjson;
 
+export {
+
 using ::unsafe_yyjson_equals_strn;
 using ::unsafe_yyjson_get_next;
 using ::unsafe_yyjson_is_str_noesc;
@@ -200,3 +202,5 @@ namespace yyjson
 inline constexpr uint8_t TYPE_STR = uint8_t(5);
 inline constexpr uint8_t SUBTYPE_NOESC = uint8_t((1 << 3));
 }; // namespace yyjson
+
+}
