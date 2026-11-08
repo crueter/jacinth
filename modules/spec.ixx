@@ -125,7 +125,7 @@ struct write_opts {
     bool prettyTwoSpaces = false;
     bool endingNewline = false;
 
-    yyjson_write_flag to_flags() const
+    inline yyjson_write_flag to_flags() const
     {
         yyjson_write_flag f = 0;
         f |= pretty ? int(WriteFlag::PRETTY) : 0;
