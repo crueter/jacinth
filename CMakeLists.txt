@@ -87,7 +87,13 @@ target_sources(jacinth PUBLIC
         modules/read.ixx
         modules/iter.ixx
         modules/err.ixx
-        modules/meta.ixx)
+        modules/meta.ixx
+        modules/boost.ixx
+
+        # TODO: autogen yyjson.ixx
+        # grep -rEo '\b(unsafe_)?yyjson_[a-zA-Z0-9_]+\b' modules | cut -d':' -f2 | grep -v 'inline' \
+        #   | sort -u | xargs -I% echo "    using ::%;"
+        modules/yyjson.ixx)
 
 target_link_libraries(jacinth PUBLIC yyjson)
 

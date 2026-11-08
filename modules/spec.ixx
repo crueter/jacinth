@@ -4,16 +4,21 @@
 // This stores type specializations for parseValue and writeValue
 module;
 
+#ifndef JACINTH_USE_STD_MODULE
 #include <array>
 #include <map>
 #include <optional>
 #include <span>
-#include <string_view>
 #include <vector>
-
-#include "yyjson.h"
+#endif
 
 export module jacinth:spec;
+
+import :yyjson;
+
+#ifdef JACINTH_USE_STD_MODULE
+import std;
+#endif
 
 export {
     // vector specializations
@@ -123,14 +128,14 @@ struct write_opts {
     yyjson_write_flag to_flags() const
     {
         yyjson_write_flag f = 0;
-        f |= pretty ? YYJSON_WRITE_PRETTY : 0;
-        f |= escapeUnicode ? YYJSON_WRITE_ESCAPE_UNICODE : 0;
-        f |= escapeSlashes ? YYJSON_WRITE_ESCAPE_SLASHES : 0;
-        f |= allowInfAndNan ? YYJSON_WRITE_ALLOW_INF_AND_NAN : 0;
-        f |= writeInfAndNanAsNull ? YYJSON_WRITE_INF_AND_NAN_AS_NULL : 0;
-        f |= allowInvalidUnicode ? YYJSON_WRITE_ALLOW_INVALID_UNICODE : 0;
-        f |= prettyTwoSpaces ? YYJSON_WRITE_PRETTY_TWO_SPACES : 0;
-        f |= endingNewline ? YYJSON_WRITE_NEWLINE_AT_END : 0;
+        f |= pretty ? int(WriteFlag::PRETTY) : 0;
+        f |= escapeUnicode ? int(WriteFlag::ESCAPE_UNICODE) : 0;
+        f |= escapeSlashes ? int(WriteFlag::ESCAPE_SLASHES) : 0;
+        f |= allowInfAndNan ? int(WriteFlag::ALLOW_INF_AND_NAN) : 0;
+        f |= writeInfAndNanAsNull ? int(WriteFlag::INF_AND_NAN_AS_NULL) : 0;
+        f |= allowInvalidUnicode ? int(WriteFlag::ALLOW_INVALID_UNICODE) : 0;
+        f |= prettyTwoSpaces ? int(WriteFlag::PRETTY_TWO_SPACES) : 0;
+        f |= endingNewline ? int(WriteFlag::NEWLINE_AT_END) : 0;
         return f;
     }
 };

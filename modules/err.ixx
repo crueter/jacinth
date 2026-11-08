@@ -1,10 +1,19 @@
+// SPDX-FileCopyrightText: Copyright 2026 crueter
+// SPDX-License-Identifier: MIT
+
 // std::error_code, enum, etc. for error handling
 module;
 
+#ifndef JACINTH_USE_STD_MODULE
 #include <string>
 #include <system_error>
+#endif
 
 export module jacinth:err;
+
+#ifdef JACINTH_USE_STD_MODULE
+import std;
+#endif
 
 export {
 

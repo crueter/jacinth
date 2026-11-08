@@ -3,6 +3,7 @@
 
 #ifdef JACINTH_USE_STD_MODULE
 import std;
+import std.compat;
 #else
 #include <cstdint>
 #include <map>
@@ -14,7 +15,7 @@ import tests;
 
 struct MapStruct {
     std::string name;
-    std::map<std::string, std::uint32_t> values;
+    std::map<std::string, uint32_t> values;
 };
 
 void test_map()

@@ -1,10 +1,16 @@
 @PACKAGE_INIT@
 
 include(CMakeFindDependencyMacro)
+include(CMakeDependentOption)
+
 find_dependency(yyjson)
 
 option(JACINTH_USE_REFLECTION
     "Use C++26 reflection features instead of Boost.PFR" OFF)
+
+# import std support
+cmake_dependent_option(JACINTH_USE_STD_MODULE "Import the standard library as a module" ON
+    "CMAKE_VERSION GREATER_EQUAL 4.5" OFF)
 
 if (NOT JACINTH_USE_REFLECTION)
     find_dependency(Boost COMPONENTS headers)
@@ -22,6 +28,10 @@ if (JACINTH_USE_REFLECTION)
 else()
     list(APPEND link Boost::headers)
     target_compile_features(jacinth::jacinth INTERFACE cxx_std_23)
+endif()
+
+if (JACINTH_USE_STD_MODULE)
+    target_compile_definitions(jacinth::jacinth PUBLIC JACINTH_USE_STD_MODULE)
 endif()
 
 # boost is only needed if reflection is OFF

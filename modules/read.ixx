@@ -3,6 +3,7 @@
 
 module;
 
+#ifndef JACINTH_USE_STD_MODULE
 #include <expected>
 #include <span>
 #include <string>
@@ -10,22 +11,37 @@ module;
 #include <type_traits>
 #include <utility>
 
-// force yyjson to have external linkage
-#define yyjson_api_inline yyjson_inline
-#include "yyjson.h"
-
 #ifdef JACINTH_USE_REFLECTION
 #include <meta>
-#include <ranges>
-#else
-#include "boost/pfr.hpp"
 #endif
+
+#endif
+
+// FIXME
+#define yyjson_arr_foreach(arr, idx, max, val) \
+    for ((idx) = 0, \
+        (max) = yyjson_arr_size(arr), \
+        (val) = yyjson_arr_get_first(arr); \
+        (idx) < (max); \
+        (idx)++, \
+        (val) = unsafe_yyjson_get_next(val))
 
 export module jacinth:read;
 
 export import :err;
 export import :spec;
 export import :meta;
+
+import :yyjson;
+
+#ifndef JACINTH_USE_REFLECTION
+import :boost;
+#endif
+
+#ifdef JACINTH_USE_STD_MODULE
+import std;
+import std.compat;
+#endif
 
 // TODO: is_<type> funcs?
 
@@ -207,7 +223,8 @@ public:
 
             // memory alloc errors mean we just need to allocate more
             // otherwise, or if >1mb, fall back to a direct write
-            if (err.code != YYJSON_WRITE_ERROR_MEMORY_ALLOCATION || cap >= (std::size_t{1} << 20))
+            if (err.code != yyjson_write_code(WriteResult::ERROR_MEMORY_ALLOCATION) ||
+                cap >= (std::size_t{1} << 20))
                 break;
             cap *= 2;
         }
@@ -248,7 +265,7 @@ public:
                                                         yyjson_read_flag flg = 0)
     {
         yyjson_read_err err;
-        yyjson_doc *d = yyjson_read_opts(const_cast<char *>(s.data()), s.size(), flg, NULL, &err);
+        yyjson_doc *d = yyjson_read_opts(const_cast<char *>(s.data()), s.size(), flg, nullptr, &err);
         if (!d)
             return std::unexpected(jacinth::make_error_code(jacinth::errc::invalid_json));
         return doc(d);
@@ -549,7 +566,7 @@ export {
                     return result;
             }
 #else
-            boost::pfr::for_each_field_with_name(field, process_field);
+            pfr::for_each_field_with_name(field, process_field);
 #endif
 
             // Custom "from" spec

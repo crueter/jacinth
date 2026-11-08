@@ -3,6 +3,7 @@
 
 #ifdef JACINTH_USE_STD_MODULE
 import std;
+import std.compat;
 #else
 #include <array>
 #include <cstdint>
@@ -46,7 +47,7 @@ struct Asset {
 
 struct MapStruct {
     std::string name;
-    std::map<std::string, std::uint32_t> values;
+    std::map<std::string, uint32_t> values;
 };
 
 // [WARNING: MOSTLY AI SLOP]

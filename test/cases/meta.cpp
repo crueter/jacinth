@@ -3,6 +3,7 @@
 
 #ifdef JACINTH_USE_STD_MODULE
 import std;
+import std.compat;
 #else
 #include <cstdint>
 #include <print>
@@ -15,19 +16,19 @@ import tests;
 
 struct Member {
     std::string username;
-    std::uint64_t id;
+    uint64_t id;
 };
 
 struct GameInfo {
     std::string name;
-    std::uint64_t id;
+    uint64_t id;
 };
 
 struct Room {
     GameInfo game;
     std::string title;
     std::string creationTime;
-    std::uint64_t id = 0;
+    uint64_t id = 0;
     std::vector<Member> members;
 };
 
@@ -67,7 +68,7 @@ void test_read(std::string_view data)
     tests::check_match("Room game", room.game.name, std::string("Minecraft"));
     tests::check_match("Room member size", room.members.size(), std::size_t(4));
     tests::check_match("Room owner", room.members[0].username, std::string("crueter"));
-    tests::check_match("Room ID", room.id, std::uint64_t(0));
+    tests::check_match("Room ID", room.id, uint64_t(0));
     tests::check("Room has no creation time", room.creationTime.empty());
 }
 

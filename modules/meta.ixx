@@ -3,6 +3,7 @@
 
 module;
 
+#ifndef JACINTH_USE_STD_MODULE
 #include <array>
 #include <string_view>
 #include <tuple>
@@ -10,11 +11,19 @@ module;
 
 #ifdef JACINTH_USE_REFLECTION
 #include <meta>
-#else
-#include "boost/pfr.hpp"
+#endif
+
 #endif
 
 export module jacinth:meta;
+
+#ifndef JACINTH_USE_REFLECTION
+import :boost;
+#endif
+
+#ifdef JACINTH_USE_STD_MODULE
+import std;
+#endif
 
 // meta specialization definitions
 export namespace jacinth
@@ -202,7 +211,7 @@ struct meta_resolver {
             return names;
         }();
 #else
-        boost::pfr::names_as_array<T>();
+        pfr::names_as_array<T>();
 #endif
 
     // rename
