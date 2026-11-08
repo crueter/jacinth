@@ -9,7 +9,7 @@ option(JACINTH_USE_REFLECTION
     "Use C++26 reflection features instead of Boost.PFR" OFF)
 
 # import std support
-cmake_dependent_option(JACINTH_USE_STD_MODULE "Import the standard library as a module" ON
+cmake_dependent_option(JACINTH_USE_STD_MODULE "Import the standard library as a module" OFF
     "CMAKE_VERSION GREATER_EQUAL 4.5" OFF)
 
 if (NOT JACINTH_USE_REFLECTION)

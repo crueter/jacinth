@@ -22,7 +22,7 @@ cmake_dependent_option(JACINTH_INSTALL "Create a Jacinth install target" ${PROJE
     "JACINTH_USE_SYSTEM_PFR AND JACINTH_USE_SYSTEM_YYJSON" OFF)
 
 # import std support
-cmake_dependent_option(JACINTH_USE_STD_MODULE "Import the standard library as a module" ON
+cmake_dependent_option(JACINTH_USE_STD_MODULE "Import the standard library as a module" OFF
     "CMAKE_VERSION GREATER_EQUAL 4.5" OFF)
 
 # cxx
@@ -92,7 +92,7 @@ target_sources(jacinth PUBLIC
 
         # TODO: autogen yyjson.ixx
         # grep -rEo '\b(unsafe_)?yyjson_[a-zA-Z0-9_]+\b' modules | cut -d':' -f2 | grep -v 'inline' \
-        #   | sort -u | xargs -I% echo "    using ::%;"
+        #   | sort -u | xargs -I% echo "using ::%;"
         modules/yyjson.ixx)
 
 target_link_libraries(jacinth PUBLIC yyjson)
