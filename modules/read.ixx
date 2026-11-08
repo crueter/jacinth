@@ -4,6 +4,7 @@
 module;
 
 #ifndef JACINTH_USE_STD_MODULE
+#include <cstdlib>
 #include <expected>
 #include <span>
 #include <string>
@@ -237,7 +238,7 @@ public:
             return;
         }
         s.assign(buf, len);
-        free(buf);
+        std::free(buf);
     }
 
     // iter
