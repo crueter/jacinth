@@ -12,7 +12,7 @@ module;
 export module jacinth:boost;
 
 #ifndef JACINTH_USE_REFLECTION
-namespace pfr {
+export namespace pfr {
 
 using boost::pfr::for_each_field_with_name;
 using boost::pfr::names_as_array;
