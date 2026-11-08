@@ -8,6 +8,7 @@ import std.compat;
 #include <cstdint>
 #include <map>
 #include <string>
+#include <vector>
 #endif
 
 import jacinth;
