@@ -18,6 +18,7 @@ Jacinth is (currently) a relatively thin OOP wrapper around the very fast [yyjso
   - `to_json(jacinth::mutable_value json, const T& field)`
   - `from_json(const jacinth::value &json, T& field)`
 - C++20 module support
+  - CMake 4.5.0+ also gets access to `import std`
 - Extremely low executable size overhead
   - A basic `std::println("Hello World");` program takes up 131K with `-O3`
   - Jacinth's test executables take up just 400K with `-O3`
@@ -143,9 +144,20 @@ Jacinth will already be fast no matter what you do, but if you need to squeeze o
 
 Jacinth can be used both as a system and a vendored target. It can be integrated simply via `find_package(jacinth)` or `add_subdirectory(jacinth)`, respectively.
 
-Jacinth creates a `jacinth::jacinth` target, so you can link to Jacinth via `target_link_libraries(MyApp PRIVATE jacinth::jacinth)`. You usually shouldn't need Jacinth within your header files, so internal targets generally won't need `PUBLIC` propagation. Both the system and vendored targets provide a `JACINTH_USE_REFLECTION` option. Enabling this will add `-freflection` to your compile options, force the C++26 standard, and define `JACINTH_USE_REFLECTION` in the module.
+Jacinth creates a `jacinth::jacinth` target, so you can link to Jacinth via `target_link_libraries(MyApp PRIVATE jacinth::jacinth)`. You usually shouldn't need Jacinth within your header files, so internal targets generally won't need `PUBLIC` propagation.
 
 In order for Jacinth to properly compile and for `import jacinth;` to work, you MUST turn on `CMAKE_CXX_SCAN_FOR_MODULES`, and use a supported generator. Ninja is recommended. For `clang-cl`, CMake 4.4 or newer is required and the Visual Studio generator is not supported. Obviously you'll need a modern compiler too; see [Compiler Support](#compiler-support).
+
+Both the system and vendored targets provide these options:
+
+- `JACINTH_USE_REFLECTION`
+  - Use C++26 reflection features instead of Boost.PFR for automatic struct serialization.
+  - Only supported on GCC 16+.
+  - Note that this will **force** the C++26 standard (including `-freflection`) onto Jacinth and all its dependents.
+  - Due to an apparent GCC bug, if you don't use `JACINTH_USE_STD_MODULE`, you *may* need to `#include <vector>` in your source files that use struct reflection.
+- `JACINTH_USE_STD_MODULE`
+  - Use `import std` where applicable instead of manual header includes.
+  - This is only supported on CMake 4.5.0+.
 
 ### Adding Jacinth to your project
 
@@ -156,6 +168,8 @@ You can use `FetchContent`, [CPMUtil](https://github.com/crueter/CPMUtil), a Git
 As with all modules, you *must* ensure that the target you're importing the module into has more or less the same compiler flags as Jacinth. If you set a bunch of additional flags e.g. `-fwrapv` or `-fno-rtti` to your source files, Jacinth must also have these applied.
 
 Linking to `jacinth::jacinth` will automatically enable C++26 and reflection features if you have `JACINTH_USE_REFLECTION` on, but you may wish to enable this for your entire project if using Jacinth's reflection features.
+
+If you have reflection enabled, be aware that your
 
 ## Usage
 

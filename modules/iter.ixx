@@ -4,16 +4,19 @@
 // All iterator definitions for jacinth
 module;
 
-// force yyjson to have external linkage
-#define yyjson_api_inline yyjson_inline
-#include "yyjson.h"
-
+#ifndef JACINTH_USE_STD_MODULE
 #include <string_view>
+#endif
 
 export module jacinth:iter;
 
 import :read;
 import :write;
+export import :yyjson;
+
+#ifdef JACINTH_USE_STD_MODULE
+import std;
+#endif
 
 export namespace jacinth
 {

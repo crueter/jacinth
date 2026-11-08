@@ -3,21 +3,21 @@
 
 module;
 
+#ifndef JACINTH_USE_STD_MODULE
+#include <cstdlib>
 #include <expected>
 #include <optional>
 #include <string>
 #include <system_error>
 #include <utility>
-
-// force yyjson to have external linkage
-#define yyjson_api_inline yyjson_inline
-#include "yyjson.h"
+#include <cstdint>
+#include <type_traits>
 
 #ifdef JACINTH_USE_REFLECTION
 #include <meta>
 #include <ranges>
-#else
-#include "boost/pfr.hpp"
+#endif
+
 #endif
 
 export module jacinth:write;
@@ -25,6 +25,17 @@ export module jacinth:write;
 export import :err;
 export import :spec;
 export import :read;
+
+export import :yyjson;
+
+#ifndef JACINTH_USE_REFLECTION
+export import :boost;
+#endif
+
+#ifdef JACINTH_USE_STD_MODULE
+import std;
+import std.compat;
+#endif
 
 export template <typename T>
 jacinth::errc writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const T &field,
@@ -323,7 +334,7 @@ public:
 
             // memory alloc errors mean we just need to allocate more
             // otherwise, or if >1mb, fall back to a direct write
-            if (err.code != YYJSON_WRITE_ERROR_MEMORY_ALLOCATION || cap >= (std::size_t{1} << 20))
+            if (err.code != yyjson_write_code(WriteResult::ERROR_MEMORY_ALLOCATION) || cap >= (std::size_t{1} << 20))
                 break;
             cap *= 2;
         }
@@ -335,7 +346,7 @@ public:
             return;
         }
         s.assign(buf, len);
-        free(buf);
+        std::free(buf);
     }
 
     // iter
@@ -419,7 +430,7 @@ public:
                                                          yyjson_read_flag flg = 0)
     {
         yyjson_read_err err;
-        yyjson_doc *d = yyjson_read_opts(const_cast<char *>(s.data()), s.size(), flg, NULL, &err);
+        yyjson_doc *d = yyjson_read_opts(const_cast<char *>(s.data()), s.size(), flg, nullptr, &err);
         if (!d)
             return std::unexpected(jacinth::make_error_code(jacinth::errc::invalid_json));
 
@@ -730,7 +741,7 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
 
                 // noesc speeds up writes
                 if (unsafe_yyjson_is_str_noesc(name.data(), name.size()))
-                    unsafe_yyjson_set_tag(key, YYJSON_TYPE_STR, YYJSON_SUBTYPE_NOESC, name.size());
+                    unsafe_yyjson_set_tag(key, yyjson::TYPE_STR, yyjson::SUBTYPE_NOESC, name.size());
 
                 if (!yyjson_mut_obj_add(val, key, sub))
                     result = jacinth::errc::write_error;
@@ -754,7 +765,7 @@ jacinth::errc inline writeValue(yyjson_mut_doc *doc, yyjson_mut_val *val, const 
                 return result;
         }
 #else
-        boost::pfr::for_each_field_with_name(field, process_field);
+        pfr::for_each_field_with_name(field, process_field);
 #endif
 
         // FIXME(crueter) Merge all the scalar paths somehow, incl here

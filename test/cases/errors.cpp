@@ -1,15 +1,19 @@
 // SPDX-FileCopyrightText: Copyright 2026 crueter
 // SPDX-License-Identifier: MIT
 
+#ifdef JACINTH_USE_STD_MODULE
+import std;
+import std.compat;
+#else
 #include <array>
 #include <cstdint>
 #include <map>
 #include <optional>
-#include <print>
 #include <string>
 #include <string_view>
 #include <system_error>
 #include <vector>
+#endif
 
 import jacinth;
 import tests;
