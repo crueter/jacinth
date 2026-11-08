@@ -8,7 +8,7 @@ module;
 #define yyjson_api_inline yyjson_inline
 #include "yyjson.h"
 
-export module jacinth:yyjson;
+module jacinth:yyjson;
 
 export {
     using ::unsafe_yyjson_equals_strn;

@@ -9,7 +9,7 @@ module;
 #include "boost/pfr/core_name.hpp"
 #endif
 
-export module jacinth:boost;
+module jacinth:boost;
 
 #ifndef JACINTH_USE_REFLECTION
 export namespace pfr {

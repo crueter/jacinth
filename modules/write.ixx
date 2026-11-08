@@ -13,6 +13,7 @@ module;
 
 #ifdef JACINTH_USE_REFLECTION
 #include <meta>
+#include <ranges>
 #endif
 
 #endif
