@@ -10,6 +10,7 @@ module;
 #include <optional>
 #include <span>
 #include <vector>
+#include <cstdint>
 #endif
 
 export module jacinth:spec;
