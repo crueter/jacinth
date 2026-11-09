@@ -169,8 +169,6 @@ As with all modules, you *must* ensure that the target you're importing the modu
 
 Linking to `jacinth::jacinth` will automatically enable C++26 and reflection features if you have `JACINTH_USE_REFLECTION` on, but you may wish to enable this for your entire project if using Jacinth's reflection features.
 
-If you have reflection enabled, be aware that your
-
 ## Usage
 
 Abstract:
