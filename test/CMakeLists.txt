@@ -7,8 +7,8 @@ project(jacinth_test LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 
-option(JACINTH_USE_REFLECTION
-    "Use C++26 reflection features instead of Boost.PFR" OFF)
+option(JACINTH_USE_REFLECTION "Use C++26 reflection features instead of Boost.PFR" OFF)
+option(JACINTH_WERROR "Enable strict errors and warnings for Jacinth's test suite" ON)
 
 if (PROJECT_IS_TOP_LEVEL)
     find_package(jacinth REQUIRED)
@@ -21,13 +21,16 @@ target_sources(tests PUBLIC
     FILE_SET tests TYPE CXX_MODULES FILES tests.ixx)
 
 target_link_libraries(tests PUBLIC jacinth::jacinth)
-if (MSVC AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(tests PUBLIC
-        /W4 /WX /we4834 /wd4702)
-else()
-    target_compile_options(tests PUBLIC
-        -Werror=unused-result -Wextra -Werror
-        -Wno-c23-extensions -Wno-unused-command-line-argument)
+
+if (JACINTH_WERROR)
+    if (MSVC AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_compile_options(tests PUBLIC
+            /W4 /WX /we4834 /wd4702)
+    else()
+        target_compile_options(tests PUBLIC
+            -Werror=unused-result -Wextra -Werror
+            -Wno-c23-extensions -Wno-unused-command-line-argument)
+    endif()
 endif()
 
 # need to link to stdc++exp (on glibc++ only) for std::print on mingw
